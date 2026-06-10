@@ -95,7 +95,9 @@ export function SummaryScreen({ initialIssues }: { initialIssues: Issue[] }) {
 
   return (
     <div className="screen">
-      <h1 className="title">{t("sumTitle")}</h1>
+      <div className="aurora">
+        <h1 className="title">{t("sumTitle")}</h1>
+      </div>
       <p className="sub">
         {PROPS.length} {lang === "ar" ? "عقارات" : "properties"} ·{" "}
         {lang === "ar" ? "اليوم" : "today"}

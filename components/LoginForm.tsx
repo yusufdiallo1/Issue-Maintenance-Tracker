@@ -23,7 +23,7 @@ export function LoginForm() {
   const [state, formAction] = useActionState(signInAction, initialState);
 
   return (
-    <div className="screen login">
+    <div className="screen login aurora">
       <Logo variant="full" className="logo" size={60} />
       <h1>{t("appName")}</h1>
       <div className="tag">AURION HOTELS</div>

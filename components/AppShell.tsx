@@ -30,6 +30,7 @@ export function AppShell({
   profiles,
   team,
   audit,
+  roomsByProperty,
 }: {
   userName: string;
   role: Role;
@@ -38,6 +39,7 @@ export function AppShell({
   profiles: ProfileLite[];
   team: ProfileFull[];
   audit: AuditRow[];
+  roomsByProperty: Record<string, string[]>;
 }) {
   const { t } = useLang();
   const items = navItemsFor(role);
@@ -69,7 +71,12 @@ export function AppShell({
     );
   } else if (active === "add") {
     // After submit, staff go to "My reports"; admins (no mine nav) to Reports.
-    screen = <AddReportScreen onViewReports={() => navigate(isAdmin ? "reports" : "mine")} />;
+    screen = (
+      <AddReportScreen
+        roomsByProperty={roomsByProperty}
+        onViewReports={() => navigate(isAdmin ? "reports" : "mine")}
+      />
+    );
   } else if (active === "mine") {
     screen = (
       <MyReportsScreen initialIssues={issues} profiles={profiles} currentUserId={currentUserId} />

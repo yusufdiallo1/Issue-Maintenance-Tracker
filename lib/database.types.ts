@@ -148,6 +148,12 @@ export type Database = {
         };
         Relationships: [];
       };
+      rooms: {
+        Row: { id: number; property: string; room: string; created_at: string };
+        Insert: { id?: never; property: string; room: string; created_at?: string };
+        Update: { id?: never; property?: string; room?: string; created_at?: string };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

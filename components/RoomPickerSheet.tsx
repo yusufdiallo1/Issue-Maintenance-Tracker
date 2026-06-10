@@ -15,6 +15,7 @@ export function RoomPickerSheet({
   enter,
   initialProperty,
   selectedRoom,
+  roomsByProperty,
   onPick,
   onClose,
 }: {
@@ -22,12 +23,16 @@ export function RoomPickerSheet({
   enter: boolean;
   initialProperty: string | null;
   selectedRoom: string | null;
+  /** Rooms grouped by property code (from the DB). Falls back to PROPS. */
+  roomsByProperty?: Record<string, string[]>;
   onPick: (property: string, room: string) => void;
   onClose: () => void;
 }) {
   const { t, lang } = useLang();
   const [sel, setSel] = useState(initialProperty ?? PROPS[0].code);
   const prop = PROPS.find((p) => p.code === sel) ?? PROPS[0];
+  // Prefer DB rooms; fall back to the bundled constant if not provided.
+  const rooms = roomsByProperty?.[sel] ?? prop.rooms;
 
   if (!open) {
     return (
@@ -51,9 +56,9 @@ export function RoomPickerSheet({
         ))}
       </div>
 
-      {prop.rooms.length > 0 ? (
+      {rooms.length > 0 ? (
         <div className="roomgrid">
-          {prop.rooms.map((r) => (
+          {rooms.map((r) => (
             <button
               key={r}
               className={selectedRoom === r && initialProperty === sel ? "rm on" : "rm"}

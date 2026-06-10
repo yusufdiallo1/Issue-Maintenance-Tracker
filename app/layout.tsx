@@ -1,9 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { LiquidGlassFilter } from "@/components/LiquidGlassFilter";
 import { dirFor, LANG_COOKIE, normalizePrefs, THEME_COOKIE } from "@/lib/prefs";
+
+// Resend-style precision: Geist for UI, Geist Mono for IDs / rooms / timestamps
+// / audit. Exposed as CSS vars; Arabic falls back to the system Arabic stack.
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Aurion Maintenance",
@@ -29,7 +35,7 @@ const THEME_COLOR_SCRIPT = `
     var dark = t === 'dark' || (t === 'auto' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches);
     var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute('content', dark ? '#000000' : '#f5f5f7');
+    if (m) m.setAttribute('content', dark ? '#0a0a0a' : '#f7f7f5');
   } catch (e) {}
 })();
 `;
@@ -42,12 +48,19 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   );
 
   return (
-    <html lang={lang} dir={dirFor(lang)} data-theme={theme}>
+    <html
+      lang={lang}
+      dir={dirFor(lang)}
+      data-theme={theme}
+      className={`${geist.variable} ${geistMono.variable}`}
+    >
       <head>
-        <meta name="theme-color" content="#0C0F14" />
+        <meta name="theme-color" content="#0a0a0a" />
         <script dangerouslySetInnerHTML={{ __html: THEME_COLOR_SCRIPT }} />
       </head>
       <body>
+        {/* Premium matte film-grain (dark only); pointer-events none. */}
+        <div className="grain" aria-hidden />
         <LiquidGlassFilter />
         <Providers initialLang={lang} initialTheme={theme}>
           {children}

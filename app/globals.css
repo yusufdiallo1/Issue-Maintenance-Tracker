@@ -31,7 +31,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --canvas: #000000;
+    --canvas: #0a0a0a;
+    --canvas-top: #141414;
     --card: #0c0c0d;
     --card2: #161617;
     --raise: #1c1c1e;
@@ -82,9 +83,10 @@ html[data-theme="light"] {
 }
 
 html[data-theme="dark"] {
-  /* Resend-style monochrome: pure-black canvas, flat near-black cards,
-     hairline neutral borders, crisp white text, gold reserved as accent. */
-  --canvas: #000000;
+  /* Resend-style monochrome: near-black canvas, flat cards, hairline borders,
+     crisp white text, gold reserved as accent. */
+  --canvas: #0a0a0a;
+  --canvas-top: #141414;
   --card: #0c0c0d;
   --card2: #161617;
   --raise: #1c1c1e;
@@ -150,9 +152,17 @@ body {
 }
 body {
   font-family:
-    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", system-ui,
+    var(--font-sans),
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "Segoe UI",
+    system-ui,
     sans-serif;
-  background: var(--canvas);
+  /* Resend-style near-black canvas with a subtle vertical fade to pure black. */
+  background:
+    radial-gradient(120% 80% at 50% 0%, var(--canvas-top, transparent), transparent 60%),
+    var(--canvas);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -161,8 +171,46 @@ body {
 }
 [dir="rtl"] body,
 [dir="rtl"] {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Arabic", "Segoe UI", system-ui, sans-serif;
+  font-family:
+    var(--font-sans),
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Arabic",
+    "Segoe UI",
+    system-ui,
+    sans-serif;
   letter-spacing: 0;
+}
+/* Monospace for precision details: report IDs, room numbers, timestamps, audit,
+   and the big analytics numbers. The Resend "craft" signal. */
+.mono,
+.issue .room,
+.issue .time,
+.ticket,
+.atime,
+.stat .num,
+.analytics .anv {
+  font-family: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0;
+}
+
+/* Premium matte film-grain overlay (dark only, fixed, ~3%). */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+html[data-theme="dark"] .grain {
+  opacity: 0.03;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .grain {
+    opacity: 0.03;
+  }
 }
 button {
   font: inherit;
@@ -189,7 +237,8 @@ select {
   width: 100%;
   height: 100dvh;
   overflow: hidden;
-  background: var(--canvas);
+  background: transparent;
+  z-index: 2;
 }
 .shell {
   display: flex;
@@ -221,8 +270,10 @@ select {
     flex: none;
     height: 100%;
     padding: 22px 16px;
-    border-inline-end: 1px solid var(--border);
-    background: var(--card);
+    border-inline-end: 1px solid var(--glass-edge);
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px) saturate(180%) url(#liquidGlass-lg);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
   }
   .scroll {
     padding: 20px 34px 52px !important;
@@ -380,12 +431,106 @@ select {
   font-weight: 600;
 }
 
-/* ---- Glass card ---- */
+/* ---- Flat Resend card (matte; NOT glass) ---- */
 .glass {
   background: var(--card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   position: relative;
+}
+
+/* ============================================================
+   LIQUID GLASS MATERIAL SYSTEM
+   Translucent, refractive, light-reactive floating surfaces.
+   Tiers: thin | regular | thick.  Tint: neutral | gold.
+   Use ONLY on floating surfaces — the flat canvas/cards stay matte.
+   ============================================================ */
+:root {
+  /* Adaptive specular + edge values (light defaults; overridden in dark). */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-edge: rgba(255, 255, 255, 0.7);
+  --glass-specular: rgba(255, 255, 255, 0.9);
+  --glass-inner: rgba(0, 0, 0, 0.06);
+  --glass-ambient: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --glass-key: 0 18px 40px -22px rgba(0, 0, 0, 0.28);
+}
+html[data-theme="dark"] {
+  --glass-bg: rgba(20, 20, 22, 0.55);
+  --glass-edge: rgba(255, 255, 255, 0.14);
+  --glass-specular: rgba(255, 255, 255, 0.5);
+  --glass-inner: rgba(0, 0, 0, 0.5);
+  --glass-ambient: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --glass-key: 0 22px 50px -24px rgba(0, 0, 0, 0.8);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --glass-bg: rgba(20, 20, 22, 0.55);
+    --glass-edge: rgba(255, 255, 255, 0.14);
+    --glass-specular: rgba(255, 255, 255, 0.5);
+    --glass-inner: rgba(0, 0, 0, 0.5);
+    --glass-ambient: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --glass-key: 0 22px 50px -24px rgba(0, 0, 0, 0.8);
+  }
+}
+
+.glass-surface {
+  position: relative;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-edge);
+  border-radius: 22px;
+  /* squircle feel on supporting browsers */
+  border-radius: clamp(18px, 2vw, 26px);
+  box-shadow:
+    inset 0 1px 0 var(--glass-specular),
+    inset 0 -10px 20px -16px var(--glass-inner),
+    var(--glass-ambient),
+    var(--glass-key);
+  -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.05);
+  backdrop-filter: blur(16px) saturate(180%) brightness(1.05);
+}
+.glass-thin {
+  -webkit-backdrop-filter: blur(8px) saturate(160%) brightness(1.03) url(#liquidGlass-sm);
+  backdrop-filter: blur(8px) saturate(160%) brightness(1.03) url(#liquidGlass-sm);
+}
+.glass-regular {
+  -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.05) url(#liquidGlass);
+  backdrop-filter: blur(16px) saturate(180%) brightness(1.05) url(#liquidGlass);
+}
+.glass-thick {
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.06) url(#liquidGlass-lg);
+  backdrop-filter: blur(28px) saturate(190%) brightness(1.06) url(#liquidGlass-lg);
+}
+.glass-gold {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fill) 22%, transparent), transparent 60%),
+    var(--glass-bg);
+  border-color: color-mix(in srgb, var(--fill) 40%, var(--glass-edge));
+}
+/* Fallback: no SVG-filter backdrops (Safari/iOS) → clean frosted blur. */
+@supports not (backdrop-filter: url(#liquidGlass)) {
+  .glass-thin,
+  .glass-regular,
+  .glass-thick {
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(16px) saturate(180%);
+  }
+}
+/* Fallback: no backdrop-filter at all → tasteful solid surface. */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-surface {
+    background: var(--card);
+    border-color: var(--border);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .glass-surface {
+    transition:
+      transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1),
+      box-shadow 0.18s ease;
+  }
+  .glass-surface:active {
+    transform: scale(0.992);
+  }
 }
 
 /* ---- Loading screen (spinning Aurion mark) ---- */
@@ -589,11 +734,19 @@ p.sub {
   padding: 6px;
   border-radius: 32px;
   z-index: 40;
-  background: var(--nav-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--border);
-  box-shadow: 0 8px 30px -10px rgba(0, 0, 0, 0.18);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%) brightness(1.05) url(#liquidGlass-sm);
+  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.05);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-specular),
+    inset 0 -10px 18px -16px var(--glass-inner),
+    var(--glass-key);
+}
+@supports not (backdrop-filter: url(#liquidGlass)) {
+  .nav {
+    backdrop-filter: blur(20px) saturate(180%);
+  }
 }
 .nav .tab {
   display: flex;
@@ -719,11 +872,15 @@ p.sub {
 }
 .btn.gold {
   color: var(--fill-text);
-  background: var(--fill);
-  box-shadow: 0 6px 18px -8px var(--fill);
+  /* Gold-glass: subtle top→bottom gradient + inner top highlight. */
+  background: linear-gradient(180deg, var(--fill-2), var(--fill));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -8px 16px -10px rgba(0, 0, 0, 0.25),
+    0 8px 22px -10px color-mix(in srgb, var(--fill) 70%, transparent);
 }
 .btn.gold:active {
-  background: var(--fill-2);
+  background: linear-gradient(180deg, var(--fill), var(--fill-2));
 }
 .btn.gold:disabled {
   opacity: 0.4;
@@ -825,6 +982,38 @@ button.input {
   height: 60px;
   margin: 0 auto 18px;
   border-radius: 16px;
+  position: relative;
+  z-index: 1;
+}
+/* One tasteful gold/aurora glow behind the login mark + Summary header. */
+.aurora {
+  position: relative;
+}
+.aurora::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  inset-block-start: -40px;
+  inset-inline-start: 50%;
+  width: 320px;
+  height: 220px;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    60% 60% at 50% 50%,
+    color-mix(in srgb, var(--fill) 28%, transparent),
+    transparent 70%
+  );
+  filter: blur(36px);
+  opacity: 0.7;
+}
+[dir="rtl"] .aurora::before {
+  transform: translateX(50%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before {
+    opacity: 0.5;
+  }
 }
 .login h1 {
   font-size: 30px;
@@ -1902,10 +2091,14 @@ button.input {
   inset-inline-end: 14px;
   z-index: 56;
   width: 250px;
-  background: var(--sheet-bg);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%) url(#liquidGlass);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-edge);
   border-radius: 18px;
-  box-shadow: var(--shadow-lg);
+  box-shadow:
+    inset 0 1px 0 var(--glass-specular),
+    var(--shadow-lg);
   overflow: hidden;
   transform-origin: top right;
 }
@@ -2011,8 +2204,18 @@ button.input {
   overflow-y: auto;
   border-radius: 22px 22px 0 0;
   padding: 8px 20px calc(env(safe-area-inset-bottom) + 24px);
-  background: var(--sheet-bg);
-  border-top: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(28px) saturate(190%) url(#liquidGlass-lg);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border-top: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-specular);
+}
+@supports not (backdrop-filter: url(#liquidGlass)) {
+  .sheet,
+  .modal,
+  .menu {
+    backdrop-filter: blur(22px) saturate(180%);
+  }
 }
 @keyframes slideup {
   from {
@@ -2059,11 +2262,15 @@ button.input {
   max-width: 480px;
   max-height: min(86dvh, 760px);
   overflow-y: auto;
-  border-radius: 22px;
+  border-radius: 24px;
   padding: 22px 22px calc(22px + env(safe-area-inset-bottom));
-  background: var(--sheet-bg);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-lg);
+  background: var(--glass-bg);
+  backdrop-filter: blur(28px) saturate(190%) url(#liquidGlass-lg);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-specular),
+    var(--shadow-lg);
 }
 .modal.enter {
   animation: popin 0.24s cubic-bezier(0.2, 0.9, 0.3, 1) both;

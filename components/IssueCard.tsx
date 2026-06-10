@@ -47,9 +47,9 @@ export function IssueCard({
       <div className="body">
         <div className="l1">
           <span className="statusdot" style={{ background: statusColor(issue.status) }} />
-          <span className="room">{issue.room || (pm ? pm[lang] : "")}</span>
+          <span className="room mono">{issue.room || (pm ? pm[lang] : "")}</span>
           {issue.room && <span className="prop">{pm ? pm[lang] : ""}</span>}
-          <span className="time">{ago(issue.created_at, lang)}</span>
+          <span className="time mono">{ago(issue.created_at, lang)}</span>
         </div>
         <div className="desc">
           {(lang === "ar" ? issue.description_ar : issue.description) || issue.description}

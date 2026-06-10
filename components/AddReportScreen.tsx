@@ -27,7 +27,13 @@ function AiBadge({ label }: { label: string }) {
   );
 }
 
-export function AddReportScreen({ onViewReports }: { onViewReports: () => void }) {
+export function AddReportScreen({
+  onViewReports,
+  roomsByProperty,
+}: {
+  onViewReports: () => void;
+  roomsByProperty?: Record<string, string[]>;
+}) {
   const { t, lang } = useLang();
   const [supabase] = useState(() => createClient());
 
@@ -458,6 +464,7 @@ export function AddReportScreen({ onViewReports }: { onViewReports: () => void }
         enter={sheetEnter}
         initialProperty={roomProp}
         selectedRoom={room}
+        roomsByProperty={roomsByProperty}
         onPick={(p, r) => {
           setRoomProp(p);
           setRoom(r);
