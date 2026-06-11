@@ -12,6 +12,7 @@ const VERB_KEY: Record<string, Key> = {
   login: "vLogin",
   role: "vRole",
   pwreset: "vPwreset",
+  passcode: "vPasscode",
 };
 
 export function auditText(
@@ -24,7 +25,9 @@ export function auditText(
   if (e.target_property) {
     const pm = propMeta(e.target_property);
     target = `${pm ? pm[lang] : e.target_property} ${e.target_room ?? ""}`.trim();
-  } else if (e.target_text) {
+  } else if (e.target_text && e.action !== "passcode") {
+    // For passcode rows, target_text holds the new password — never surface it
+    // in the list/CSV; it's shown only in the admin drill-in sheet.
     target = e.target_text;
   }
   return { actor: e.actor_name, verb, target };

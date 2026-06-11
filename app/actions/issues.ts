@@ -440,6 +440,17 @@ export async function reopenIssue(issueId: number): Promise<ActionResult> {
   return { ok: true };
 }
 
+/** Pin / unpin an issue so it sorts to the very top of the Reports list. */
+export async function togglePin(issueId: number, pinned: boolean): Promise<ActionResult> {
+  const me = await getCurrentProfile();
+  if (!me) return { ok: false, error: "unauthenticated" };
+  const supabase = await createClient();
+  const { error } = await supabase.from("issues").update({ pinned }).eq("id", issueId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/");
+  return { ok: true };
+}
+
 /** Admin only: set an issue's deadline; writes a 'deadline' audit row. */
 export async function setDeadline(issueId: number, deadline: Deadline): Promise<ActionResult> {
   const me = await getCurrentProfile();

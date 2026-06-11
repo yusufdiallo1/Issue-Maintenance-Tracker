@@ -8,6 +8,7 @@
 import { useMemo, useState } from "react";
 import { Search, Download, ChevronDown } from "lucide-react";
 import { useLang } from "@/app/providers";
+import { Sheet } from "../Sheet";
 import { fmtDateTime } from "@/lib/issues";
 import { auditText } from "@/lib/audit";
 import type { Key } from "@/lib/i18n/dictionary";
@@ -26,6 +27,7 @@ const ACTIONS: { id: string; key: Key }[] = [
   { id: "login", key: "acLogin" },
   { id: "role", key: "acRole" },
   { id: "pwreset", key: "acPwreset" },
+  { id: "passcode", key: "acPasscode" },
 ];
 
 export function AuditPanel({ audit, team }: { audit: AuditRow[]; team: ProfileFull[] }) {
@@ -34,6 +36,7 @@ export function AuditPanel({ audit, team }: { audit: AuditRow[]; team: ProfileFu
   const [actionFilter, setActionFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(PAGE);
+  const [detail, setDetail] = useState<AuditRow | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -143,7 +146,7 @@ export function AuditPanel({ audit, team }: { audit: AuditRow[]; team: ProfileFu
           {visible.map((e) => {
             const { actor, verb, target } = auditText(e, lang, t);
             return (
-              <div className="aud" key={e.id}>
+              <button className="aud aud-btn" key={e.id} onClick={() => setDetail(e)} type="button">
                 <span className="adot" />
                 <div>
                   <div className="at">
@@ -151,7 +154,7 @@ export function AuditPanel({ audit, team }: { audit: AuditRow[]; team: ProfileFu
                   </div>
                   <div className="atime">{fmtDateTime(e.created_at, lang)}</div>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -173,6 +176,36 @@ export function AuditPanel({ audit, team }: { audit: AuditRow[]; team: ProfileFu
         <Download />
         {t("exportCsv")}
       </button>
+
+      <Sheet
+        open={detail != null}
+        enter
+        onClose={() => setDetail(null)}
+        title={detail ? auditText(detail, lang, t).verb : ""}
+      >
+        {detail && (
+          <div className="aud-detail">
+            <Row label={t("filterUser")} value={detail.actor_name} />
+            <Row label={t("filterAction")} value={detail.action} />
+            {auditText(detail, lang, t).target && (
+              <Row label={t("proofLabel")} value={auditText(detail, lang, t).target} />
+            )}
+            <Row label="" value={fmtDateTime(detail.created_at, lang)} />
+            {detail.action === "passcode" && detail.target_text && (
+              <Row label={t("newPasswordLabel")} value={detail.target_text} mono />
+            )}
+          </div>
+        )}
+      </Sheet>
     </>
+  );
+}
+
+function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="aud-detail-row">
+      {label && <span className="adl">{label}</span>}
+      <span className={mono ? "adv mono" : "adv"}>{value}</span>
+    </div>
   );
 }

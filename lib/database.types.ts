@@ -71,6 +71,7 @@ export type Database = {
           taken_by: string | null;
           type: string;
           urgency: Database["public"]["Enums"]["issue_urgency"];
+          pinned: boolean;
           proof_paths: string[];
           proof_note: string | null;
           proof_note_lang: string | null;
@@ -101,6 +102,7 @@ export type Database = {
           taken_by?: string | null;
           type: string;
           urgency: Database["public"]["Enums"]["issue_urgency"];
+          pinned?: boolean;
           proof_paths?: string[];
           proof_note?: string | null;
           proof_note_lang?: string | null;
@@ -131,6 +133,7 @@ export type Database = {
           taken_by?: string | null;
           type?: string;
           urgency?: Database["public"]["Enums"]["issue_urgency"];
+          pinned?: boolean;
           proof_paths?: string[];
           proof_note?: string | null;
           proof_note_lang?: string | null;
@@ -276,7 +279,8 @@ export type Database = {
         | "rmemp"
         | "login"
         | "role"
-        | "pwreset";
+        | "pwreset"
+        | "passcode";
       issue_deadline: "today" | "tomorrow" | "days3" | "week";
       issue_status: "open" | "progress" | "pending" | "done";
       issue_urgency: "urgent" | "soon" | "wait";

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { LogOut, Bell, Volume2 } from "lucide-react";
+import { useState, useTransition } from "react";
+import { LogOut, Bell, Volume2, KeyRound } from "lucide-react";
 import { useLang, useTheme } from "@/app/providers";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { usePush } from "@/lib/usePush";
 import { useToast } from "./Toast";
 import { setNotifPrefs } from "@/app/actions/push";
+import { changeOwnPassword } from "@/app/actions/employees";
 import { signOutAction } from "@/app/login/actions";
 import { LANGS } from "@/lib/i18n/dictionary";
 import type { Theme } from "@/lib/prefs";
@@ -62,6 +63,24 @@ export function SettingsScreen({
     const next = !soundOn;
     setSoundOn(next);
     await setNotifPrefs({ sound: next });
+  };
+
+  const [newPass, setNewPass] = useState("");
+  const [pwPending, startPw] = useTransition();
+  const changePass = () => {
+    if (newPass.trim().length < 6) {
+      show(t("weakPassword"), "error");
+      return;
+    }
+    startPw(async () => {
+      const res = await changeOwnPassword(newPass.trim());
+      if (res.ok) {
+        show(t("passcodeChanged"), "success");
+        setNewPass("");
+      } else {
+        show(res.error === "weak_password" ? t("weakPassword") : t("loadError"), "error");
+      }
+    });
   };
 
   return (
@@ -125,6 +144,31 @@ export function SettingsScreen({
             <span className="knob" />
           </span>
         </button>
+      </div>
+
+      <div className="section-h">{t("changePasscode")}</div>
+      <div className="slist glass" style={{ padding: 14 }}>
+        <div className="pwrow">
+          <KeyRound />
+          <input
+            className="input"
+            type="password"
+            value={newPass}
+            onChange={(e) => setNewPass(e.target.value)}
+            placeholder={t("newPasscode")}
+            autoComplete="new-password"
+          />
+        </div>
+        <button
+          className="btn gold"
+          type="button"
+          disabled={pwPending || newPass.trim().length < 6}
+          onClick={changePass}
+          style={{ marginTop: 10 }}
+        >
+          {t("updatePasscode")}
+        </button>
+        <p className="pwhint">{t("passcodeAdminNote")}</p>
       </div>
 
       <button

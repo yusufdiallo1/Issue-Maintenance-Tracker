@@ -1940,6 +1940,96 @@ button.input {
   }
 }
 
+/* ---- Pin (issue detail + card) ---- */
+.pinbtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--dim);
+  background: var(--control-bg);
+  transition:
+    color 0.15s,
+    background 0.15s,
+    transform 0.12s;
+}
+.pinbtn svg {
+  width: 17px;
+  height: 17px;
+}
+.pinbtn:active {
+  transform: scale(0.92);
+}
+.pinbtn.on {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.pin-mark {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: rotate(45deg);
+}
+
+/* ---- Audit drill-in ---- */
+.aud-btn {
+  width: 100%;
+  text-align: start;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.aud-btn:hover {
+  background: var(--card2);
+}
+.aud-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+.aud-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.aud-detail-row .adl {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.aud-detail-row .adv {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ---- Change passcode (settings) ---- */
+.pwrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pwrow > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--dim);
+  flex: none;
+}
+.pwrow .input {
+  flex: 1;
+}
+.pwhint {
+  font-size: 12px;
+  color: var(--faint);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
 /* ---- Pending approvals (admin) ---- */
 .pending-list {
   display: flex;
@@ -3453,7 +3543,7 @@ button.input {
   background: var(--fill);
 }
 .trend-legend .sw-resolved {
-  background: var(--accent);
+  background: var(--u-wait);
 }
 .area-chart {
   width: 100%;
@@ -3476,13 +3566,19 @@ button.input {
   vector-effect: non-scaling-stroke;
 }
 .area-line-resolved {
-  stroke: var(--accent);
+  stroke: var(--u-wait);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 4 4;
-  opacity: 0.85;
+  opacity: 0.9;
   vector-effect: non-scaling-stroke;
+}
+.area-dot-created {
+  fill: var(--fill);
+}
+.area-dot-resolved {
+  fill: var(--u-wait);
 }
 @media (prefers-reduced-motion: no-preference) {
   .area-fill,

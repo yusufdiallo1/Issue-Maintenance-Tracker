@@ -126,6 +126,45 @@ export async function resetPassword(userId: string, password: string): Promise<E
   return { ok: true };
 }
 
+/**
+ * A user changes their OWN passcode. On success, every admin is notified and an
+ * audit row records the new passcode so an admin can view it (per the product
+ * requirement). The audit log is admin-only via RLS — see the security note.
+ */
+export async function changeOwnPassword(password: string): Promise<EmployeeResult> {
+  const me = await getCurrentProfile();
+  if (!me) return { ok: false, error: "unauthenticated" };
+  if (!password || password.length < 6) return { ok: false, error: "weak_password" };
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.updateUserById(me.id, { password });
+  if (error) return { ok: false, error: error.message };
+
+  // Audit row stores the new passcode in target_text (admin-viewable drill-in).
+  await admin.from("audit_log").insert({
+    actor: me.id,
+    actor_name: me.full_name,
+    action: "passcode",
+    target_text: password,
+  });
+
+  // Notify every admin (except self) via the in-app bell.
+  const { data: admins } = await admin.from("profiles").select("id").eq("role", "admin");
+  const ids = (admins ?? []).map((a) => a.id).filter((id) => id !== me.id);
+  if (ids.length) {
+    await admin.from("notifications").insert(
+      ids.map((uid) => ({
+        user_id: uid,
+        kind: "new" as const,
+        title: "🔑 Passcode changed",
+        body: `${me.full_name} changed their passcode`,
+      })),
+    );
+  }
+  revalidatePath("/");
+  return { ok: true };
+}
+
 /** Delete an auth user + profile. Admin only; cannot remove self. */
 export async function removeEmployee(userId: string): Promise<EmployeeResult> {
   const me = await getCurrentProfile();

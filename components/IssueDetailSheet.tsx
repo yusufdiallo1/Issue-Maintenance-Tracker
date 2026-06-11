@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Check, Clock, User, ArrowDownToLine, X } from "lucide-react";
+import { Check, Clock, User, ArrowDownToLine, X, Pin } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon";
 import { useLang } from "@/app/providers";
 import { propMeta } from "@/lib/i18n/dictionary";
@@ -26,7 +26,13 @@ import {
   type Issue,
 } from "@/lib/issues";
 import { LANGS } from "@/lib/i18n/dictionary";
-import { takeIssue, reopenIssue, setDeadline, clearDeadline } from "@/app/actions/issues";
+import {
+  takeIssue,
+  reopenIssue,
+  setDeadline,
+  clearDeadline,
+  togglePin,
+} from "@/app/actions/issues";
 
 const DEADLINE_OPTS: { id: Deadline; key: "ddToday" | "ddTomorrow" | "ddDays3" | "ddWeek" }[] = [
   { id: "today", key: "ddToday" },
@@ -212,6 +218,19 @@ export function IssueDetailSheet({
                 </div>
               </div>
               <div style={{ flex: 1 }} />
+              <button
+                className={issue.pinned ? "pinbtn on" : "pinbtn"}
+                aria-label={t("pin")}
+                title={t("pin")}
+                disabled={pending}
+                onClick={() =>
+                  startTransition(async () => {
+                    await togglePin(issue.id, !issue.pinned);
+                  })
+                }
+              >
+                <Pin />
+              </button>
               <span
                 className="ubadge"
                 style={{

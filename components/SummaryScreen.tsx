@@ -151,6 +151,17 @@ function TrendChart({
       {createdArea && <path className="area-fill" d={createdArea} fill="url(#areaFill)" />}
       {createdLine && <path className="area-line-created" d={createdLine} fill="none" />}
       {resolvedLine && <path className="area-line-resolved" d={resolvedLine} fill="none" />}
+      {/* Dot markers so even a single day of data reads clearly (not a flat line). */}
+      {createdPts.map((p, i) =>
+        trend[i].created > 0 ? (
+          <circle key={`c${i}`} cx={p.x} cy={p.y} r="2.5" className="area-dot-created" />
+        ) : null,
+      )}
+      {resolvedPts.map((p, i) =>
+        trend[i].resolved > 0 ? (
+          <circle key={`r${i}`} cx={p.x} cy={p.y} r="2.5" className="area-dot-resolved" />
+        ) : null,
+      )}
     </svg>
   );
 }

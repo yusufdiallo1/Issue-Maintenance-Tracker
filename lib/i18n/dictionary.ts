@@ -227,6 +227,44 @@ export const T = {
     bn: "নোটিফিকেশন শব্দ",
     ur: "اطلاع کی آواز",
   },
+  pin: { en: "Pin to top", ar: "تثبيت بالأعلى", bn: "উপরে পিন করুন", ur: "اوپر پن کریں" },
+  changePasscode: {
+    en: "Change passcode",
+    ar: "تغيير رمز الدخول",
+    bn: "পাসকোড পরিবর্তন",
+    ur: "پاس کوڈ تبدیل کریں",
+  },
+  newPasscode: { en: "New passcode", ar: "رمز دخول جديد", bn: "নতুন পাসকোড", ur: "نیا پاس کوڈ" },
+  updatePasscode: {
+    en: "Update passcode",
+    ar: "تحديث الرمز",
+    bn: "পাসকোড আপডেট",
+    ur: "پاس کوڈ اپ ڈیٹ",
+  },
+  passcodeChanged: {
+    en: "Passcode updated",
+    ar: "تم تحديث الرمز",
+    bn: "পাসকোড আপডেট হয়েছে",
+    ur: "پاس کوڈ اپ ڈیٹ ہو گیا",
+  },
+  weakPassword: {
+    en: "Use at least 6 characters.",
+    ar: "استخدم 6 أحرف على الأقل.",
+    bn: "অন্তত ৬ অক্ষর দিন।",
+    ur: "کم از کم 6 حروف استعمال کریں۔",
+  },
+  passcodeAdminNote: {
+    en: "Your admin is notified and can view the new passcode.",
+    ar: "يتم إخطار المشرف ويمكنه رؤية الرمز الجديد.",
+    bn: "আপনার অ্যাডমিনকে জানানো হবে এবং তারা নতুন পাসকোড দেখতে পারবেন।",
+    ur: "آپ کے ایڈمن کو اطلاع دی جائے گی اور وہ نیا پاس کوڈ دیکھ سکتے ہیں۔",
+  },
+  newPasswordLabel: {
+    en: "New passcode",
+    ar: "رمز الدخول الجديد",
+    bn: "নতুন পাসকোড",
+    ur: "نیا پاس کوڈ",
+  },
   primerTitle: {
     en: "Get alerted to new issues",
     ar: "احصل على تنبيهات البلاغات الجديدة",
@@ -666,6 +704,12 @@ export const T = {
     bn: "পাসওয়ার্ড রিসেট করেছেন",
     ur: "پاس ورڈ ری سیٹ کیا",
   },
+  vPasscode: {
+    en: "changed their passcode",
+    ar: "غيّر رمز الدخول",
+    bn: "তাদের পাসকোড পরিবর্তন করেছেন",
+    ur: "اپنا پاس کوڈ تبدیل کیا",
+  },
   // ---- Manage area ----
   navManage: { en: "Manage", ar: "الإدارة", bn: "পরিচালনা", ur: "نظم کریں" },
   tabTeam: { en: "Team", ar: "الفريق", bn: "দল", ur: "ٹیم" },
@@ -783,6 +827,12 @@ export const T = {
     ar: "إعادة تعيين كلمة المرور",
     bn: "পাসওয়ার্ড রিসেট",
     ur: "پاس ورڈ ری سیٹ",
+  },
+  acPasscode: {
+    en: "Passcode change",
+    ar: "تغيير رمز الدخول",
+    bn: "পাসকোড পরিবর্তন",
+    ur: "پاس کوڈ تبدیلی",
   },
   xTimesIn60d: {
     en: (n: number) => `${n}× in 60 days`,

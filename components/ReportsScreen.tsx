@@ -195,6 +195,8 @@ export function ReportsScreen({
       i.reported_by === currentUserId || i.taken_by === currentUserId ? 0 : 1;
     const arr = [...list];
     arr.sort((a, b) => {
+      // Pinned issues always float to the very top, regardless of sort mode.
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
       if (sort === "mine") {
         const d = mineRank(a) - mineRank(b);
         if (d !== 0) return d;

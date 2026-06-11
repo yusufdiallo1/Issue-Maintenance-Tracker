@@ -47,7 +47,14 @@ export function IssueCard({
       </div>
       <div className="body">
         <div className="l1">
-          <span className="statusdot" style={{ background: statusColor(issue.status) }} />
+          {issue.pinned && <span className="pin-mark" aria-hidden />}
+          {/* Green dot = new/unhandled (still open). */}
+          <span
+            className="statusdot"
+            style={{
+              background: issue.status === "open" ? "var(--u-wait)" : statusColor(issue.status),
+            }}
+          />
           <span className="room mono">{issue.room || (pm ? pm[lang] : "")}</span>
           {issue.room && <span className="prop">{pm ? pm[lang] : ""}</span>}
           <span className="time mono">{ago(issue.created_at, lang)}</span>
