@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Bell, AlertTriangle, ShieldAlert } from "lucide-react";
 import { useScrollLock } from "@/lib/useScrollLock";
+import { ModalPortal } from "./ModalPortal";
 import { useLang } from "@/app/providers";
 import { usePush } from "@/lib/usePush";
 import { useToast } from "./Toast";
@@ -77,61 +78,63 @@ export function NotificationsModal({
   };
 
   return (
-    <div className="scrim modal-scrim enter" onClick={onClose} style={{ zIndex: 92 }}>
-      <div
-        className="modal enter"
-        role="dialog"
-        aria-modal="true"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="notif-head">
-          <h2 style={{ margin: 0 }}>{t("notifications")}</h2>
-          <button
-            className={subscribed ? "btn gold" : "btn ghost"}
-            style={{ width: "auto", padding: "8px 14px", fontSize: 13 }}
-            onClick={onToggle}
-            disabled={busy}
-          >
-            {subscribed ? t("pushOff") : t("pushOn")}
-          </button>
-        </div>
+    <ModalPortal>
+      <div className="scrim modal-scrim enter" onClick={onClose} style={{ zIndex: 92 }}>
+        <div
+          className="modal enter"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="notif-head">
+            <h2 style={{ margin: 0 }}>{t("notifications")}</h2>
+            <button
+              className={subscribed ? "btn gold" : "btn ghost"}
+              style={{ width: "auto", padding: "8px 14px", fontSize: 13 }}
+              onClick={onToggle}
+              disabled={busy}
+            >
+              {subscribed ? t("pushOff") : t("pushOn")}
+            </button>
+          </div>
 
-        {!loaded ? (
-          <div className="empty">
-            <Bell />
-            <div>{t("loading")}</div>
-          </div>
-        ) : items.length === 0 ? (
-          <div className="empty">
-            <Bell />
-            <div>{t("noNotifications")}</div>
-          </div>
-        ) : (
-          <div className="notif-list">
-            {items.map((n) => (
-              <button
-                key={n.id}
-                className={n.read ? "notif-row" : "notif-row unread"}
-                onClick={() => {
-                  if (n.issue_id) {
-                    onOpenIssue(n.issue_id);
-                    onClose();
-                  }
-                }}
-              >
-                <span className={`notif-ic ${n.kind}`}>
-                  {n.kind === "safety" ? <ShieldAlert /> : <AlertTriangle />}
-                </span>
-                <span className="notif-body">
-                  <span className="notif-title">{n.title}</span>
-                  <span className="notif-text">{n.body}</span>
-                  <span className="notif-time mono">{ago(n.created_at, lang)}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
+          {!loaded ? (
+            <div className="empty">
+              <Bell />
+              <div>{t("loading")}</div>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="empty">
+              <Bell />
+              <div>{t("noNotifications")}</div>
+            </div>
+          ) : (
+            <div className="notif-list">
+              {items.map((n) => (
+                <button
+                  key={n.id}
+                  className={n.read ? "notif-row" : "notif-row unread"}
+                  onClick={() => {
+                    if (n.issue_id) {
+                      onOpenIssue(n.issue_id);
+                      onClose();
+                    }
+                  }}
+                >
+                  <span className={`notif-ic ${n.kind}`}>
+                    {n.kind === "safety" ? <ShieldAlert /> : <AlertTriangle />}
+                  </span>
+                  <span className="notif-body">
+                    <span className="notif-title">{n.title}</span>
+                    <span className="notif-text">{n.body}</span>
+                    <span className="notif-time mono">{ago(n.created_at, lang)}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }

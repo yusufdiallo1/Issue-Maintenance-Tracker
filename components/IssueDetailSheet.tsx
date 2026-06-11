@@ -7,6 +7,7 @@ import { useLang } from "@/app/providers";
 import { propMeta } from "@/lib/i18n/dictionary";
 import { createClient } from "@/lib/supabase/client";
 import { useScrollLock } from "@/lib/useScrollLock";
+import { ModalPortal } from "./ModalPortal";
 import { useOnline } from "@/lib/useOnline";
 import { useToast } from "./Toast";
 import { enqueue, uuid, type OutboxKind } from "@/lib/outbox";
@@ -173,154 +174,157 @@ export function IssueDetailSheet({
   }
 
   return (
-    <div
-      className={enter ? "scrim modal-scrim enter" : "scrim modal-scrim"}
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className={enter ? "modal enter" : "modal"} onClick={(e) => e.stopPropagation()}>
-        <div className="row" style={{ marginBottom: 14 }}>
-          <div className="thumb" style={{ width: 50, height: 50, background: `var(--card2)` }}>
-            <CategoryIcon type={issue.type} />
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-.02em" }}>
-              {pm ? pm[lang] : issue.property}
-              {issue.room ? ` · ${issue.room}` : ""}
+    <ModalPortal>
+      <div
+        className={enter ? "scrim modal-scrim enter" : "scrim modal-scrim"}
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className={enter ? "modal enter" : "modal"} onClick={(e) => e.stopPropagation()}>
+          <div className="row" style={{ marginBottom: 14 }}>
+            <div className="thumb" style={{ width: 50, height: 50, background: `var(--card2)` }}>
+              <CategoryIcon type={issue.type} />
             </div>
-            <div style={{ color: "var(--dim)", fontSize: 13, fontWeight: 600 }}>
-              {t(typeLabelKey(issue.type))} · {t(statusLabelKey(issue.status))}
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-.02em" }}>
+                {pm ? pm[lang] : issue.property}
+                {issue.room ? ` · ${issue.room}` : ""}
+              </div>
+              <div style={{ color: "var(--dim)", fontSize: 13, fontWeight: 600 }}>
+                {t(typeLabelKey(issue.type))} · {t(statusLabelKey(issue.status))}
+              </div>
             </div>
+            <div style={{ flex: 1 }} />
+            <span
+              className="ubadge"
+              style={{
+                color: urgencyColor(issue.urgency),
+                background: `color-mix(in srgb, ${urgencyColor(issue.urgency)} 16%, transparent)`,
+                fontSize: 13,
+                padding: "5px 12px",
+              }}
+            >
+              {t(urgencyLabelKey(issue.urgency))}
+            </span>
           </div>
-          <div style={{ flex: 1 }} />
-          <span
-            className="ubadge"
-            style={{
-              color: urgencyColor(issue.urgency),
-              background: `color-mix(in srgb, ${urgencyColor(issue.urgency)} 16%, transparent)`,
-              fontSize: 13,
-              padding: "5px 12px",
-            }}
-          >
-            {t(urgencyLabelKey(issue.urgency))}
-          </span>
-        </div>
 
-        {/* Photos: stored images at natural aspect, else the clean placeholder. */}
-        {photoUrls.length > 0 ? (
-          <div className="photo-gallery" style={{ marginBottom: 16 }}>
-            {photoUrls.map((url, i) => (
-              <button
-                key={i}
-                className="photo-cell clickable"
-                onClick={() => setLightbox(url)}
-                aria-label="View photo"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt="" />
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="photo-empty">
-            <CategoryIcon type={issue.type} />
-            <span className="pe-cap">{t("noPhoto")}</span>
-          </div>
-        )}
+          {/* The PROBLEM first — always the prominent lead of the detail. */}
+          <p className="detail-desc">{desc}</p>
+          {loc.translated && (
+            <button
+              className="translated-note"
+              onClick={() => setShowOriginal((v) => !v)}
+              type="button"
+            >
+              {showOriginal
+                ? t("showTranslation")
+                : `${t("translatedFrom")} ${LANGS.find((l) => l.id === loc.source)?.label ?? loc.source}`}
+            </button>
+          )}
 
-        <p style={{ fontSize: 16, lineHeight: 1.55, marginBottom: loc.translated ? 4 : 12 }}>
-          {desc}
-        </p>
-        {loc.translated && (
-          <button
-            className="translated-note"
-            onClick={() => setShowOriginal((v) => !v)}
-            type="button"
-          >
-            {showOriginal
-              ? t("showTranslation")
-              : `${t("translatedFrom")} ${LANGS.find((l) => l.id === loc.source)?.label ?? loc.source}`}
-          </button>
-        )}
-
-        {(issue.deadline || (issue.tags ?? []).length > 0) && (
-          <div className="l3" style={{ marginBottom: 14 }}>
-            {issue.deadline && (
-              <span className={overdue ? "due over" : "due"}>
-                <Clock />
-                {overdue ? t("overdue") : t(dueLabelKey(issue.deadline))}
-              </span>
-            )}
-            {(issue.tags ?? []).map((tag) => {
-              const label = tagDisplay(tag, t, {
-                tagTranslations: issue.tag_translations,
-                lang,
-              });
-              return label ? (
-                <span key={tag} className="tagmini">
-                  {label}
-                </span>
-              ) : null;
-            })}
-          </div>
-        )}
-
-        {issue.taken_by && (
-          <div className={mine ? "takenline you" : "takenline"}>
-            <User />
-            {mine ? t("youTook") : `${t("takenBy")} ${takerName ?? ""}`}
-          </div>
-        )}
-
-        <div style={{ fontSize: 13, color: "var(--faint)", fontWeight: 500, marginBottom: 16 }}>
-          {t("reportedBy")} {reporterName} · {fmtDateTime(issue.created_at, lang)}
-        </div>
-
-        {action}
-
-        {/* Admin-only deadline controls. */}
-        {isAdmin && (
-          <>
-            <div className="section-h" style={{ margin: "18px 0 10px" }}>
-              {t("deadline")}
-            </div>
-            <div className="ddchips">
-              {DEADLINE_OPTS.map((o) => (
+          {/* Photos: stored images at natural aspect, else the clean placeholder. */}
+          {photoUrls.length > 0 ? (
+            <div className="photo-gallery" style={{ marginBottom: 16 }}>
+              {photoUrls.map((url, i) => (
                 <button
-                  key={o.id}
-                  className={issue.deadline === o.id ? "ddchip on" : "ddchip"}
-                  disabled={pending}
-                  onClick={() =>
-                    run("deadline", () => setDeadline(issue.id, o.id), { deadline: o.id })
-                  }
+                  key={i}
+                  className="photo-cell clickable"
+                  onClick={() => setLightbox(url)}
+                  aria-label="View photo"
                 >
-                  {t(o.key)}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" />
                 </button>
               ))}
-              {issue.deadline && (
-                <button
-                  className="ddchip clear"
-                  disabled={pending}
-                  onClick={() => run("deadline", () => clearDeadline(issue.id), { deadline: null })}
-                >
-                  {t("clearDl")}
-                </button>
-              )}
             </div>
-          </>
+          ) : (
+            <div className="photo-empty">
+              <CategoryIcon type={issue.type} />
+              <span className="pe-cap">{t("noPhoto")}</span>
+            </div>
+          )}
+
+          {(issue.deadline || (issue.tags ?? []).length > 0) && (
+            <div className="l3" style={{ marginBottom: 14 }}>
+              {issue.deadline && (
+                <span className={overdue ? "due over" : "due"}>
+                  <Clock />
+                  {overdue ? t("overdue") : t(dueLabelKey(issue.deadline))}
+                </span>
+              )}
+              {(issue.tags ?? []).map((tag) => {
+                const label = tagDisplay(tag, t, {
+                  tagTranslations: issue.tag_translations,
+                  lang,
+                });
+                return label ? (
+                  <span key={tag} className="tagmini">
+                    {label}
+                  </span>
+                ) : null;
+              })}
+            </div>
+          )}
+
+          {issue.taken_by && (
+            <div className={mine ? "takenline you" : "takenline"}>
+              <User />
+              {mine ? t("youTook") : `${t("takenBy")} ${takerName ?? ""}`}
+            </div>
+          )}
+
+          <div style={{ fontSize: 13, color: "var(--faint)", fontWeight: 500, marginBottom: 16 }}>
+            {t("reportedBy")} {reporterName} · {fmtDateTime(issue.created_at, lang)}
+          </div>
+
+          {action}
+
+          {/* Admin-only deadline controls. */}
+          {isAdmin && (
+            <>
+              <div className="section-h" style={{ margin: "18px 0 10px" }}>
+                {t("deadline")}
+              </div>
+              <div className="ddchips">
+                {DEADLINE_OPTS.map((o) => (
+                  <button
+                    key={o.id}
+                    className={issue.deadline === o.id ? "ddchip on" : "ddchip"}
+                    disabled={pending}
+                    onClick={() =>
+                      run("deadline", () => setDeadline(issue.id, o.id), { deadline: o.id })
+                    }
+                  >
+                    {t(o.key)}
+                  </button>
+                ))}
+                {issue.deadline && (
+                  <button
+                    className="ddchip clear"
+                    disabled={pending}
+                    onClick={() =>
+                      run("deadline", () => clearDeadline(issue.id), { deadline: null })
+                    }
+                  >
+                    {t("clearDl")}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {lightbox && (
+          <div className="lightbox" onClick={() => setLightbox(null)}>
+            <button className="x" onClick={() => setLightbox(null)} aria-label="Close">
+              <X />
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={lightbox} alt="" onClick={(e) => e.stopPropagation()} />
+          </div>
         )}
       </div>
-
-      {lightbox && (
-        <div className="lightbox" onClick={() => setLightbox(null)}>
-          <button className="x" onClick={() => setLightbox(null)} aria-label="Close">
-            <X />
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lightbox} alt="" onClick={(e) => e.stopPropagation()} />
-        </div>
-      )}
-    </div>
+    </ModalPortal>
   );
 }

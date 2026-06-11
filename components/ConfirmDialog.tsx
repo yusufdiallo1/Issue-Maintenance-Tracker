@@ -1,6 +1,7 @@
 "use client";
 
 import { useScrollLock } from "@/lib/useScrollLock";
+import { ModalPortal } from "./ModalPortal";
 import { useLang } from "@/app/providers";
 
 /**
@@ -28,29 +29,36 @@ export function ConfirmDialog({
   useScrollLock(open);
   if (!open) return null;
   return (
-    <div className="scrim modal-scrim enter" onClick={onCancel} style={{ zIndex: 90 }}>
-      <div
-        className="modal enter"
-        role="alertdialog"
-        aria-modal="true"
-        style={{ maxWidth: 360 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2>{title}</h2>
-        {message && <p style={{ color: "var(--dim)", marginTop: 6, lineHeight: 1.5 }}>{message}</p>}
-        <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-          <button className="btn ghost" onClick={onCancel} style={{ flex: 1 }}>
-            {t("cancel")}
-          </button>
-          <button
-            className="btn gold"
-            onClick={onConfirm}
-            style={{ flex: 1, ...(danger ? { background: "var(--u-urgent)", color: "#fff" } : {}) }}
-          >
-            {confirmLabel}
-          </button>
+    <ModalPortal>
+      <div className="scrim modal-scrim enter" onClick={onCancel} style={{ zIndex: 95 }}>
+        <div
+          className="modal enter"
+          role="alertdialog"
+          aria-modal="true"
+          style={{ maxWidth: 360 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2>{title}</h2>
+          {message && (
+            <p style={{ color: "var(--dim)", marginTop: 6, lineHeight: 1.5 }}>{message}</p>
+          )}
+          <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+            <button className="btn ghost" onClick={onCancel} style={{ flex: 1 }}>
+              {t("cancel")}
+            </button>
+            <button
+              className="btn gold"
+              onClick={onConfirm}
+              style={{
+                flex: 1,
+                ...(danger ? { background: "var(--u-urgent)", color: "#fff" } : {}),
+              }}
+            >
+              {confirmLabel}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
