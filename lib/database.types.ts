@@ -157,6 +157,33 @@ export type Database = {
         Update: { id?: never; property?: string; room?: string; created_at?: string };
         Relationships: [];
       };
+      push_subscriptions: {
+        Row: {
+          id: number;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: never;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: never;
+          user_id?: string;
+          endpoint?: string;
+          p256dh?: string;
+          auth?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

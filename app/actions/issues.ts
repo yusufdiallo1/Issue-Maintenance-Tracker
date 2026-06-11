@@ -94,8 +94,41 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
     property: input.property,
     room: input.room ?? "",
   });
+
+  // Notify admins of urgent or safety-tagged reports (fire-and-forget — never
+  // block the request on push delivery).
+  const isSafety = (input.tags ?? []).includes("safety");
+  if (input.urgency === "urgent" || isSafety) {
+    void (async () => {
+      try {
+        const { sendPushToUsers, adminUserIds } = await import("@/lib/push");
+        const admins = (await adminUserIds()).filter((id) => id !== me.id);
+        const where = `${propLabelEn(input.property)}${input.room ? " " + input.room : ""}`;
+        await sendPushToUsers(admins, {
+          title: isSafety ? "⚠️ Safety report" : "🔴 Urgent report",
+          body: `${where}: ${input.description || "New issue"}`.slice(0, 140),
+          url: "/",
+          tag: `issue-${data.id}`,
+        });
+      } catch {
+        /* ignore */
+      }
+    })();
+  }
+
   revalidatePath("/");
   return { ok: true, id: data.id };
+}
+
+function propLabelEn(code: string): string {
+  const map: Record<string, string> = {
+    as_salaam: "Al-Salam",
+    al_aqeeq: "Al-Aqeeq",
+    quba: "Quba",
+    al_shaqqa: "The Apartment",
+    al_villa: "The Villa",
+  };
+  return map[code] ?? code;
 }
 
 type AuditInput = {

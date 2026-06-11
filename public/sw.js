@@ -18,6 +18,38 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// ---- Web Push ----
+self.addEventListener("push", (event) => {
+  let data = { title: "Aurion Maintenance", body: "", url: "/" };
+  try {
+    if (event.data) data = { ...data, ...event.data.json() };
+  } catch {
+    /* ignore */
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icon.svg",
+      badge: "/icon.svg",
+      tag: data.tag,
+      data: { url: data.url || "/" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if ("focus" in c) return c.focus();
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);

@@ -93,6 +93,12 @@ export const T = {
   youSaid: { en: "You said", ar: "قلت" },
   speaksLang: { en: "Language they speak", ar: "اللغة التي يتحدثها" },
   notifications: { en: "Notifications", ar: "الإشعارات" },
+  pushOn: { en: "Notifications on", ar: "تم تفعيل الإشعارات" },
+  pushOff: { en: "Notifications off", ar: "تم إيقاف الإشعارات" },
+  pushUnsupported: {
+    en: "Notifications aren't supported on this device.",
+    ar: "الإشعارات غير مدعومة على هذا الجهاز.",
+  },
   saved: { en: "Saved", ar: "تم الحفظ" },
   queuedOffline: { en: "Saved — will sync when online", ar: "محفوظ — سيُزامن عند الاتصال" },
   offline: { en: "Offline", ar: "غير متصل" },

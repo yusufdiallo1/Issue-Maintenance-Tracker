@@ -10,12 +10,20 @@ import { propMeta, TYPES, URG, TAGS } from "@/lib/i18n/dictionary";
 import { urgencyColor } from "@/lib/issues";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "./Toast";
-import { uuid } from "@/lib/outbox";
+import { uuid, enqueue, compressImage } from "@/lib/outbox";
+import { useOnline } from "@/lib/useOnline";
 import { createReport } from "@/app/actions/issues";
 
 type Urgency = "urgent" | "soon" | "wait";
 type TagOption = { id: string; label: string };
-type Photo = { id: string; path: string | null; url: string | null; uploading: boolean };
+type Photo = {
+  id: string;
+  path: string | null;
+  url: string | null;
+  uploading: boolean;
+  // Kept for the OFFLINE path: the raw file to compress + upload on sync.
+  file?: File;
+};
 
 const MAX_PHOTOS = 10;
 const MIN_PHOTOS = 2;
@@ -39,6 +47,7 @@ export function AddReportScreen({
 }) {
   const { t, lang } = useLang();
   const { show } = useToast();
+  const online = useOnline();
   const [supabase] = useState(() => createClient());
 
   const [desc, setDesc] = useState("");
@@ -67,7 +76,9 @@ export function AddReportScreen({
   const fixedTags: TagOption[] = TAGS.map((g) => ({ id: g.id, label: t(g.k) }));
   const allTags: TagOption[] = [...fixedTags, ...customTags];
 
-  const uploadedCount = photos.filter((p) => p.path).length;
+  // A photo "counts" once uploaded (online) or held as a file (offline).
+  const readyPhotos = photos.filter((p) => p.path || p.file);
+  const uploadedCount = readyPhotos.length;
   const canSend =
     !!roomProp &&
     !!type &&
@@ -93,6 +104,14 @@ export function AddReportScreen({
     for (const file of files.slice(0, slots)) {
       const uid = uuid();
       const localUrl = URL.createObjectURL(file);
+      // Offline: keep the file locally; it's compressed + uploaded on sync.
+      if (!online) {
+        setPhotos((prev) => [
+          ...prev,
+          { id: uid, path: null, url: localUrl, uploading: false, file },
+        ]);
+        continue;
+      }
       setPhotos((prev) => [...prev, { id: uid, path: null, url: localUrl, uploading: true }]);
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
       // Unique path (UUID) so two same-size shots in the same ms never collide.
@@ -143,18 +162,36 @@ export function AddReportScreen({
     const baseDesc = (type === "other" ? otherText : desc).trim();
     const labelById = new Map(customTags.map((c) => [c.id, c.label]));
     const tagValues = tags.map((id) => (labelById.has(id) ? `custom:${labelById.get(id)}` : id));
+    const payload = {
+      property: roomProp,
+      room: room ?? "",
+      type,
+      urgency: urg,
+      description: baseDesc,
+      descriptionAr: "",
+      tags: tagValues,
+      lang,
+    };
+
+    // OFFLINE: compress the held files into the outbox; the create op uploads
+    // them + creates the issue on reconnect. Show the success screen now.
+    if (!online) {
+      startTransition(async () => {
+        const blobs = await Promise.all(
+          photos.filter((p) => p.file).map((p) => compressImage(p.file as File)),
+        );
+        await enqueue({ id: uuid(), kind: "create", payload, photos: blobs });
+        show(t("queuedOffline"), "info");
+        setSent({ ticket: 0, prop: roomProp, room: room ?? "" });
+      });
+      return;
+    }
+
     startTransition(async () => {
       try {
         const res = await createReport({
-          property: roomProp,
-          room: room ?? "",
-          type,
-          urgency: urg,
-          description: baseDesc,
-          descriptionAr: "",
-          tags: tagValues,
+          ...payload,
           photoPaths: photos.filter((p) => p.path).map((p) => p.path as string),
-          lang,
         });
         if (res.ok) {
           show(t("saved"), "success");
