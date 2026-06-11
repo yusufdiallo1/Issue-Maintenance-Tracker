@@ -69,6 +69,7 @@ export function AddReportScreen({
   const [pending, startTransition] = useTransition();
 
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const descRef = useRef<HTMLTextAreaElement | null>(null);
   // Voice: the raw transcript caption ("You said: …") + a mic-denied note.
   const [voiceNote, setVoiceNote] = useState<string | null>(null);
 
@@ -269,6 +270,7 @@ export function AddReportScreen({
         {/* Small inline mic: tap to record; Groq Whisper transcribes + enhances. */}
         <div className="ta-wrap">
           <textarea
+            ref={descRef}
             className={ai.desc ? "ta justfilled" : "ta"}
             placeholder={t("descPh")}
             value={desc}
@@ -284,6 +286,14 @@ export function AddReportScreen({
               if (text) {
                 setDesc(text);
                 setAi((a) => ({ ...a, desc: true }));
+                // Nicety: focus + cursor to end so the user can edit (never required).
+                requestAnimationFrame(() => {
+                  const el = descRef.current;
+                  if (el) {
+                    el.focus();
+                    el.setSelectionRange(text.length, text.length);
+                  }
+                });
               }
             }}
             onError={(kind) =>

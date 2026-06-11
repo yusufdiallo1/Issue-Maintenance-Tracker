@@ -27,6 +27,7 @@ export function InlineVoice({
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const startedAtRef = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -39,19 +40,29 @@ export function InlineVoice({
     };
   }, []);
 
+  // Pick a mimeType the browser actually supports. iOS Safari often ONLY
+  // supports audio/mp4 — try it first there so transcription never silently
+  // fails on iPhone; otherwise prefer opus.
+  function pickMime(): string {
+    const isIOS = typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const order = isIOS
+      ? ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus"]
+      : ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+    for (const m of order) {
+      if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(m)) return m;
+    }
+    return "";
+  }
+
   async function start() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-          ? "audio/webm"
-          : MediaRecorder.isTypeSupported("audio/mp4")
-            ? "audio/mp4"
-            : "";
+      const mime = pickMime();
       const mr = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
       chunksRef.current = [];
+      // eslint-disable-next-line react-hooks/purity -- event handler, not render
+      startedAtRef.current = Date.now();
       mr.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
       mr.onstop = () => void finish(mr.mimeType);
       mediaRef.current = mr;
@@ -67,24 +78,47 @@ export function InlineVoice({
     if (mediaRef.current && mediaRef.current.state !== "inactive") mediaRef.current.stop();
   }
 
+  // POST the blob with a 15s timeout; one automatic retry on transient failure.
+  async function postVoice(blob: Blob, ext: string): Promise<string | null> {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 15000);
+      try {
+        const fd = new FormData();
+        fd.append("audio", blob, `recording.${ext}`);
+        const res = await fetch("/api/voice", { method: "POST", body: fd, signal: ctrl.signal });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error(`voice ${res.status}`);
+        const { text } = (await res.json()) as { text: string };
+        return text?.trim() ? text.trim() : "";
+      } catch {
+        clearTimeout(timer);
+        if (attempt === 1) return null; // both attempts failed
+        await new Promise((r) => setTimeout(r, 600)); // brief backoff, then retry
+      }
+    }
+    return null;
+  }
+
   async function finish(mimeType: string) {
     setState("busy");
     try {
+      // Too short / silence → gentle retry, never POST an empty blob.
+      const elapsed = Date.now() - (startedAtRef.current || 0);
       const blob = new Blob(chunksRef.current, { type: mimeType || "audio/webm" });
-      if (blob.size < 1200) {
+      if (elapsed < 500 || blob.size < 1500) {
         onError("failed");
-        setState("idle");
         return;
       }
-      const fd = new FormData();
-      fd.append("audio", blob, "recording.webm");
-      const res = await fetch("/api/voice", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("voice failed");
-      const { text } = (await res.json()) as { text: string };
-      if (text?.trim()) onFinal(text.trim());
-      else onError("failed");
-    } catch {
-      onError("failed");
+      const ext = (mimeType || "audio/webm").includes("mp4")
+        ? "mp4"
+        : (mimeType || "").includes("ogg")
+          ? "ogg"
+          : "webm";
+      const text = await postVoice(blob, ext);
+      if (text === null) onError("failed");
+      else if (text) onFinal(text);
+      else onError("failed"); // empty transcript (silence)
     } finally {
       setState("idle");
     }

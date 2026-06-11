@@ -7,6 +7,10 @@ import { toFile } from "openai";
 import { groq } from "@/lib/groq/server";
 import { createClient } from "@/lib/supabase/server";
 
+// Whisper transcription needs the Node.js runtime (not edge) for the file
+// upload + the Groq SDK. The GROQ_API_KEY must be set in the server env.
+export const runtime = "nodejs";
+
 const POLISH_PROMPT = `You are a transcription editor for a hotel maintenance app. You receive a raw spoken note (Arabic, English, or a mix). Return a cleaned-up version of the SAME text: fix grammar and spelling, add correct punctuation and capitalization, and make it read as a clear one- or two-sentence problem description. Keep the SAME language the speaker used (do not translate). Do NOT add facts, room numbers, names, or details that were not said. Output ONLY the cleaned text — no quotes, labels, or commentary.`;
 
 async function polish(transcript: string): Promise<string> {
