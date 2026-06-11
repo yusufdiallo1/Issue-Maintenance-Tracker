@@ -274,7 +274,9 @@ export function AddReportScreen({
         <div className="ta-wrap">
           <textarea
             ref={descRef}
-            className={`ta${ai.desc ? "justfilled" : ""}${recording ? "recording" : ""}`}
+            className={["ta", ai.desc && "justfilled", recording && "recording"]
+              .filter(Boolean)
+              .join(" ")}
             placeholder={t("descPh")}
             value={desc}
             onChange={(e) => {

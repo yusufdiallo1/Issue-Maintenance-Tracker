@@ -4,6 +4,7 @@ import {
   Settings,
   ClipboardCheck,
   ShieldCheck,
+  BadgeCheck,
   type LucideIcon,
 } from "lucide-react";
 import type { Key } from "@/lib/i18n/dictionary";
@@ -22,9 +23,10 @@ export function navItemsFor(role: Role): NavItem[] {
   const reports: NavItem = { id: "reports", labelKey: "navReports", Icon: List };
   const settings: NavItem = { id: "settings", labelKey: "navSettings", Icon: Settings };
   if (role === "admin") {
+    const pending: NavItem = { id: "pending", labelKey: "navPending", Icon: BadgeCheck };
     const summary: NavItem = { id: "summary", labelKey: "navSummary", Icon: BarChart3 };
     const manage: NavItem = { id: "manage", labelKey: "navManage", Icon: ShieldCheck };
-    return [reports, summary, manage, settings];
+    return [reports, pending, summary, manage, settings];
   }
   const mine: NavItem = { id: "mine", labelKey: "navMine", Icon: ClipboardCheck };
   return [reports, mine, settings];

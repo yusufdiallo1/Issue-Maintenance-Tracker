@@ -1940,6 +1940,62 @@ button.input {
   }
 }
 
+/* ---- Pending approvals (admin) ---- */
+.pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.pending-card {
+  padding: 16px;
+}
+.pc-where {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.pc-prob {
+  font-size: 14px;
+  color: var(--dim);
+  margin-top: 2px;
+  margin-bottom: 6px;
+}
+.pc-note {
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 10px 0;
+  color: var(--text);
+}
+.pc-hint {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--dim);
+  background: var(--accent-soft);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: 6px 0 14px;
+}
+.pc-hint svg {
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+  flex: none;
+  margin-top: 1px;
+}
+.pc-hint b {
+  color: var(--accent);
+}
+.pc-actions {
+  display: flex;
+  gap: 10px;
+}
+.pc-actions .btn {
+  flex: 1;
+}
+
 /* ---- Push primer card (one-time, after login) ---- */
 .primer {
   position: fixed;

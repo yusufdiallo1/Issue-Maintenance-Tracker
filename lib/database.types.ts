@@ -71,6 +71,14 @@ export type Database = {
           taken_by: string | null;
           type: string;
           urgency: Database["public"]["Enums"]["issue_urgency"];
+          proof_paths: string[];
+          proof_note: string | null;
+          proof_note_lang: string | null;
+          done_by: string | null;
+          done_at: string | null;
+          approved_by: string | null;
+          approved_at: string | null;
+          reject_reason: string | null;
         };
         Insert: {
           created_at?: string;
@@ -93,6 +101,14 @@ export type Database = {
           taken_by?: string | null;
           type: string;
           urgency: Database["public"]["Enums"]["issue_urgency"];
+          proof_paths?: string[];
+          proof_note?: string | null;
+          proof_note_lang?: string | null;
+          done_by?: string | null;
+          done_at?: string | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          reject_reason?: string | null;
         };
         Update: {
           created_at?: string;
@@ -115,6 +131,14 @@ export type Database = {
           taken_by?: string | null;
           type?: string;
           urgency?: Database["public"]["Enums"]["issue_urgency"];
+          proof_paths?: string[];
+          proof_note?: string | null;
+          proof_note_lang?: string | null;
+          done_by?: string | null;
+          done_at?: string | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          reject_reason?: string | null;
         };
         Relationships: [
           {
@@ -254,7 +278,7 @@ export type Database = {
         | "role"
         | "pwreset";
       issue_deadline: "today" | "tomorrow" | "days3" | "week";
-      issue_status: "open" | "progress" | "done";
+      issue_status: "open" | "progress" | "pending" | "done";
       issue_urgency: "urgent" | "soon" | "wait";
       user_role: "admin" | "staff";
     };

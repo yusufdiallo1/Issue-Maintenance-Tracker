@@ -59,6 +59,7 @@ export const statusColor = (s: Status) =>
   ({
     open: "var(--faint)",
     progress: "var(--accent)",
+    pending: "var(--u-soon)",
     done: "var(--u-wait)",
   })[s];
 
@@ -72,7 +73,11 @@ export const urgencyColor = (u: Urgency) =>
 
 /** i18n key for a status label. */
 export const statusLabelKey = (s: Status) =>
-  ({ open: "sNew", progress: "sProgress", done: "sDone" })[s] as "sNew" | "sProgress" | "sDone";
+  ({ open: "sNew", progress: "sProgress", pending: "sPending", done: "sDone" })[s] as
+    | "sNew"
+    | "sProgress"
+    | "sPending"
+    | "sDone";
 
 /** i18n key for an urgency label. */
 export const urgencyLabelKey = (u: Urgency) => u; // "urgent" | "soon" | "wait" are keys

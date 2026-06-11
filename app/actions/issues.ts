@@ -188,11 +188,23 @@ export async function takeIssue(issueId: number): Promise<ActionResult> {
   if (!issue) return { ok: false, error: "not_found" };
   if (issue.taken_by) return { ok: false, error: "already_taken" };
 
+  // One active issue per worker: block if they already hold one in
+  // progress/pending. (A unique partial index is the DB-level backstop.)
+  const { count: active } = await supabase
+    .from("issues")
+    .select("id", { count: "exact", head: true })
+    .eq("taken_by", me.id)
+    .in("status", ["progress", "pending"]);
+  if ((active ?? 0) > 0) return { ok: false, error: "one_at_a_time" };
+
   const { error } = await supabase
     .from("issues")
     .update({ taken_by: me.id, status: "progress" })
     .eq("id", issueId);
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    if (error.code === "23505") return { ok: false, error: "one_at_a_time" };
+    return { ok: false, error: error.message };
+  }
 
   await writeAudit(me.id, me.full_name, {
     action: "take",
@@ -203,7 +215,162 @@ export async function takeIssue(issueId: number): Promise<ActionResult> {
   return { ok: true };
 }
 
-/** Mark an issue I own as done: status done, resolved_at = now, resolved_minutes. */
+/**
+ * Submit a completion for review: the worker uploads proof photo(s) + a note of
+ * what was fixed. Status → 'pending' (awaiting an admin's approval). Admins are
+ * notified (push + bell). Legacy `markDone` (offline outbox fallback) below.
+ */
+export async function submitCompletion(
+  issueId: number,
+  proof: { proofPaths: string[]; note: string; lang: Lang },
+): Promise<ActionResult> {
+  const me = await getCurrentProfile();
+  if (!me) return { ok: false, error: "unauthenticated" };
+  if (!proof.proofPaths?.length) return { ok: false, error: "proof_required" };
+  const supabase = await createClient();
+
+  const { data: issue } = await supabase
+    .from("issues")
+    .select("property, room, taken_by")
+    .eq("id", issueId)
+    .single();
+  if (!issue) return { ok: false, error: "not_found" };
+  if (issue.taken_by !== me.id && me.role !== "admin") {
+    return { ok: false, error: "not_owner" };
+  }
+
+  const { error } = await supabase
+    .from("issues")
+    .update({
+      status: "pending",
+      proof_paths: proof.proofPaths,
+      proof_note: proof.note || null,
+      proof_note_lang: proof.lang,
+      done_by: me.id,
+      done_at: new Date(Date.now()).toISOString(),
+    })
+    .eq("id", issueId);
+  if (error) return { ok: false, error: error.message };
+
+  // Notify admins that a completion needs approval (push + bell).
+  void (async () => {
+    try {
+      const { sendPushToUsers, adminUserIds } = await import("@/lib/push");
+      const admin = createAdminClient();
+      const where = `${propLabelEn(issue.property)}${issue.room ? " " + issue.room : ""}`;
+      const title = `✅ Awaiting approval · ${where}`;
+      const body = (proof.note || "Completion submitted").slice(0, 140);
+      const admins = (await adminUserIds()).filter((id) => id !== me.id);
+      if (admins.length) {
+        await admin.from("notifications").insert(
+          admins.map((uid) => ({
+            user_id: uid,
+            kind: "new" as const,
+            issue_id: issueId,
+            title,
+            body,
+          })),
+        );
+        await sendPushToUsers(admins, {
+          title,
+          body,
+          url: `/?issue=${issueId}`,
+          tag: `issue-${issueId}`,
+        });
+      }
+    } catch {
+      /* ignore */
+    }
+  })();
+
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/** Admin approves a pending completion → status done, resolved_at/minutes set. */
+export async function approveCompletion(issueId: number): Promise<ActionResult> {
+  const me = await getCurrentProfile();
+  if (!me || me.role !== "admin") return { ok: false, error: "forbidden" };
+  const supabase = await createClient();
+
+  const { data: issue } = await supabase
+    .from("issues")
+    .select("property, room, created_at, done_by")
+    .eq("id", issueId)
+    .single();
+  if (!issue) return { ok: false, error: "not_found" };
+
+  const now = Date.now();
+  const resolvedMinutes = Math.max(
+    0,
+    Math.round((now - new Date(issue.created_at).getTime()) / 60000),
+  );
+  const { error } = await supabase
+    .from("issues")
+    .update({
+      status: "done",
+      approved_by: me.id,
+      approved_at: new Date(now).toISOString(),
+      resolved_at: new Date(now).toISOString(),
+      resolved_minutes: resolvedMinutes,
+    })
+    .eq("id", issueId);
+  if (error) return { ok: false, error: error.message };
+
+  await writeAudit(me.id, me.full_name, {
+    action: "done",
+    property: issue.property,
+    room: issue.room,
+  });
+  // Tell the worker their fix was approved.
+  if (issue.done_by && issue.done_by !== me.id) {
+    const admin = createAdminClient();
+    await admin.from("notifications").insert({
+      user_id: issue.done_by,
+      kind: "new",
+      issue_id: issueId,
+      title: "✅ Completion approved",
+      body: `${propLabelEn(issue.property)}${issue.room ? " " + issue.room : ""}`,
+    });
+  }
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/** Admin rejects a pending completion → back to progress with a reason. */
+export async function rejectCompletion(issueId: number, reason: string): Promise<ActionResult> {
+  const me = await getCurrentProfile();
+  if (!me || me.role !== "admin") return { ok: false, error: "forbidden" };
+  const supabase = await createClient();
+
+  const { data: issue } = await supabase
+    .from("issues")
+    .select("property, room, done_by")
+    .eq("id", issueId)
+    .single();
+  if (!issue) return { ok: false, error: "not_found" };
+
+  const { error } = await supabase
+    .from("issues")
+    .update({ status: "progress", reject_reason: reason || null, done_at: null })
+    .eq("id", issueId);
+  if (error) return { ok: false, error: error.message };
+
+  if (issue.done_by && issue.done_by !== me.id) {
+    const admin = createAdminClient();
+    await admin.from("notifications").insert({
+      user_id: issue.done_by,
+      kind: "urgent",
+      issue_id: issueId,
+      title: "↩︎ Completion needs more work",
+      body: (reason || `${propLabelEn(issue.property)} ${issue.room}`).slice(0, 140),
+    });
+  }
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/** Legacy direct mark-done (offline outbox fallback only — no proof/approval). */
 export async function markDone(issueId: number): Promise<ActionResult> {
   const me = await getCurrentProfile();
   if (!me) return { ok: false, error: "unauthenticated" };

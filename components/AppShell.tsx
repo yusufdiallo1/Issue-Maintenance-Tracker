@@ -17,6 +17,7 @@ import { ReportsScreen } from "./ReportsScreen";
 import { AddReportScreen } from "./AddReportScreen";
 import { MyReportsScreen } from "./MyReportsScreen";
 import { SummaryScreen } from "./SummaryScreen";
+import { PendingScreen } from "./PendingScreen";
 import { SettingsScreen } from "./SettingsScreen";
 import { ManageScreen } from "./manage/ManageScreen";
 import { navItemsFor, type Role } from "./nav-items";
@@ -158,6 +159,8 @@ export function AppShell({
     screen = (
       <MyReportsScreen initialIssues={issues} profiles={profiles} currentUserId={currentUserId} />
     );
+  } else if (active === "pending" && isAdmin) {
+    screen = <PendingScreen issues={issues} />;
   } else if (active === "summary") {
     screen = <SummaryScreen initialIssues={issues} />;
   } else if (active === "manage" && isAdmin) {
