@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ClipboardList, LayoutGrid, List as ListIcon, RotateCw, Search } from "lucide-react";
+import {
+  ClipboardList,
+  LayoutGrid,
+  List as ListIcon,
+  RotateCw,
+  Search,
+  ChevronDown,
+} from "lucide-react";
 import { IssueCard } from "./IssueCard";
 import { IssueDetailSheet } from "./IssueDetailSheet";
 import { EmptyState } from "./States";
@@ -302,16 +309,19 @@ export function ReportsScreen({
             aria-label={t("search")}
           />
         </div>
-        <select
-          className="sortselect"
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortKey)}
-          aria-label={t("sortNewest")}
-        >
-          <option value="newest">{t("sortNewest")}</option>
-          <option value="urgent">{t("sortUrgent")}</option>
-          <option value="deadline">{t("sortDeadline")}</option>
-        </select>
+        <div className="sortwrap">
+          <select
+            className="sortselect"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            aria-label={t("sortNewest")}
+          >
+            <option value="newest">{t("sortNewest")}</option>
+            <option value="urgent">{t("sortUrgent")}</option>
+            <option value="deadline">{t("sortDeadline")}</option>
+          </select>
+          <ChevronDown className="chev" />
+        </div>
       </div>
 
       {/* status filter */}

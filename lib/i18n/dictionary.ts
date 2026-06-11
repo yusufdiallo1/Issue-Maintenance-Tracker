@@ -80,6 +80,17 @@ export const T = {
   tapSpeak: { en: "Tap and speak the problem", ar: "اضغط وتحدّث عن المشكلة" },
   listening: { en: "Listening…", ar: "يستمع…" },
   transcribing: { en: "Writing it down…", ar: "يكتب ما قلته…" },
+  understanding: { en: "Understanding…", ar: "يفهم ما قلته…" },
+  stop: { en: "Stop", ar: "إيقاف" },
+  voiceDenied: {
+    en: "Microphone blocked — type the problem instead.",
+    ar: "الميكروفون محظور — اكتب المشكلة بدلاً من ذلك.",
+  },
+  voiceFailed: {
+    en: "Didn't catch that — type it in.",
+    ar: "لم نسمع ذلك جيدًا — اكتبه يدويًا.",
+  },
+  youSaid: { en: "You said", ar: "قلت" },
   or: { en: "or fill it in", ar: "أو املأها يدويًا" },
   addPhoto: { en: "Add a photo", ar: "أضف صورة" },
   photoAdded: { en: "Photo added", ar: "تمت إضافة صورة" },

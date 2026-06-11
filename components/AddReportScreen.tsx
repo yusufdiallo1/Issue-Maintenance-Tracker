@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import { Mic, Camera, X, Check, Sparkles, ChevronRight } from "lucide-react";
+import { Camera, X, Check, Sparkles, ChevronRight } from "lucide-react";
 import { RoomPickerSheet } from "./RoomPickerSheet";
+import { VoiceCapture } from "./VoiceCapture";
 import { CategoryIcon } from "./CategoryIcon";
 import { useLang } from "@/app/providers";
 import { propMeta, TYPES, URG, TAGS } from "@/lib/i18n/dictionary";
@@ -55,11 +56,10 @@ export function AddReportScreen({
   const [sent, setSent] = useState<{ ticket: number; prop: string; room: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
-  // mic: 0 idle, 1 listening, 2 transcribing
-  const [rec, setRec] = useState<0 | 1 | 2>(0);
-  const mediaRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  // Voice: the raw transcript caption ("You said: …") + a mic-denied note.
+  const [saidCaption, setSaidCaption] = useState("");
+  const [voiceNote, setVoiceNote] = useState<string | null>(null);
 
   const fixedTags: TagOption[] = TAGS.map((g) => ({ id: g.id, label: t(g.k) }));
   const allTags: TagOption[] = [...fixedTags, ...customTags];
@@ -73,90 +73,16 @@ export function AddReportScreen({
     uploadedCount >= MIN_PHOTOS;
   const aiLabel = t("aiFilled");
 
-  // ---------------- voice (small mic by the input only) ----------------
-  async function toggleMic() {
-    if (rec === 2) return;
-    if (rec === 1) {
-      mediaRef.current?.stop();
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : MediaRecorder.isTypeSupported("audio/mp4")
-          ? "audio/mp4"
-          : "";
-      const mr = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
-      chunksRef.current = [];
-      mr.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
-      mr.onstop = async () => {
-        stream.getTracks().forEach((tr) => tr.stop());
-        setRec(2);
-        await processVoice(new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" }));
-        setRec(0);
-      };
-      mediaRef.current = mr;
-      // Flush data periodically so we always have audio even on a quick stop.
-      mr.start(250);
-      setRec(1);
-    } catch {
-      setRec(0);
-    }
+  // ---------------- voice → polished description (AI only cleans wording) ----
+  function handleVoiceResult(polished: string, transcript: string) {
+    if (type === "other") setOtherText(polished);
+    else setDesc(polished);
+    setAi((a) => ({ ...a, desc: true, other: type === "other" }));
+    setSaidCaption(transcript);
+    setVoiceNote(null);
   }
-
-  async function processVoice(blob: Blob) {
-    try {
-      const fd = new FormData();
-      fd.append("audio", blob, "recording.webm");
-      const tr = await fetch("/api/transcribe", { method: "POST", body: fd });
-      if (!tr.ok) return;
-      const { text } = (await tr.json()) as { text: string };
-      if (!text?.trim()) return;
-
-      // The transcript IS the description — verbatim, never rewritten.
-      const transcript = text.trim();
-      if (type === "other") setOtherText(transcript);
-      else setDesc(transcript);
-      setAi((a) => ({ ...a, desc: true, other: type === "other" }));
-
-      // AI only infers urgency from the description.
-      const ex = await fetch("/api/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript }),
-      });
-      if (ex.ok) {
-        const { result } = (await ex.json()) as { result: { urgency: string } };
-        if (result.urgency) {
-          setUrg(result.urgency as Urgency);
-          setAi((a) => ({ ...a, urg: true }));
-        }
-      }
-    } catch {
-      /* non-blocking — manual entry always works */
-    }
-  }
-
-  // When the user finishes typing, infer urgency too (debounced on blur).
-  async function inferUrgencyFromText() {
-    const text = (type === "other" ? otherText : desc).trim();
-    if (!text || urg) return;
-    try {
-      const ex = await fetch("/api/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: text }),
-      });
-      if (!ex.ok) return;
-      const { result } = (await ex.json()) as { result: { urgency: string } };
-      if (result.urgency && !urg) {
-        setUrg(result.urgency as Urgency);
-        setAi((a) => ({ ...a, urg: true }));
-      }
-    } catch {
-      /* ignore */
-    }
+  function handleVoiceError(kind: "denied" | "failed" | "timeout") {
+    setVoiceNote(kind === "denied" ? t("voiceDenied") : t("voiceFailed"));
   }
 
   // ---------------- photos (instant, multi, up to 10) ----------------
@@ -256,7 +182,6 @@ export function AddReportScreen({
     );
   }
 
-  const micHint = rec === 1 ? t("listening") : rec === 2 ? t("transcribing") : null;
   const openRoomSheet = () => {
     setSheetEnter(true);
     setSheetOpen(true);
@@ -292,31 +217,30 @@ export function AddReportScreen({
         </div>
       </div>
 
-      {/* 2) problem — text with an inline voice mic (no big record button) */}
+      {/* 2) problem — cinematic voice (waveform) OR type; AI only polishes wording */}
       <div className="field">
         <label>
-          {t("descLabel")} {(ai.desc || micHint) && <AiBadge label={micHint ?? aiLabel} />}
+          {t("descLabel")} {ai.desc && <AiBadge label={aiLabel} />}
         </label>
-        <div className="ta-wrap">
-          <textarea
-            className={ai.desc ? "ta justfilled" : "ta"}
-            placeholder={t("descPh")}
-            value={desc}
-            onChange={(e) => {
-              setDesc(e.target.value);
-              setAi((a) => ({ ...a, desc: false }));
-            }}
-            onBlur={inferUrgencyFromText}
-          />
-          <button
-            className={rec === 1 ? "ta-mic rec" : "ta-mic"}
-            onClick={toggleMic}
-            disabled={rec === 2}
-            aria-label={t("tapSpeak")}
-          >
-            <Mic />
-          </button>
-        </div>
+
+        <VoiceCapture onResult={handleVoiceResult} onError={handleVoiceError} />
+
+        {saidCaption && (
+          <p className="said-caption">
+            {t("youSaid")}: “{saidCaption}”
+          </p>
+        )}
+        {voiceNote && <p className="voice-note">{voiceNote}</p>}
+
+        <textarea
+          className={ai.desc ? "ta justfilled" : "ta"}
+          placeholder={t("descPh")}
+          value={desc}
+          onChange={(e) => {
+            setDesc(e.target.value);
+            setAi((a) => ({ ...a, desc: false }));
+          }}
+        />
       </div>
 
       {/* 3) type */}
@@ -355,7 +279,6 @@ export function AddReportScreen({
                 setOtherText(e.target.value);
                 setAi((a) => ({ ...a, other: false }));
               }}
-              onBlur={inferUrgencyFromText}
             />
           </div>
         )}

@@ -63,7 +63,10 @@ export function ProfileMenu({
               <button
                 key={l.id}
                 className={lang === l.id ? "on" : ""}
-                onClick={() => setLang(l.id)}
+                onClick={() => {
+                  setLang(l.id);
+                  onClose();
+                }}
               >
                 {l.label}
               </button>
@@ -78,7 +81,10 @@ export function ProfileMenu({
               <button
                 key={th.id}
                 className={theme === th.id ? "on" : ""}
-                onClick={() => setTheme(th.id)}
+                onClick={() => {
+                  setTheme(th.id);
+                  onClose();
+                }}
               >
                 {th.label}
               </button>
