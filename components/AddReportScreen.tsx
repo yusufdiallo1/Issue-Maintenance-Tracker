@@ -71,7 +71,6 @@ export function AddReportScreen({
   const fileRef = useRef<HTMLInputElement | null>(null);
   // Voice: the raw transcript caption ("You said: …") + a mic-denied note.
   const [voiceNote, setVoiceNote] = useState<string | null>(null);
-  const [listening, setListening] = useState(false);
 
   const fixedTags: TagOption[] = TAGS.map((g) => ({ id: g.id, label: t(g.k) }));
   const allTags: TagOption[] = [...fixedTags, ...customTags];
@@ -267,11 +266,10 @@ export function AddReportScreen({
           {t("descLabel")} {ai.desc && <AiBadge label={aiLabel} />}
         </label>
 
-        {/* Small inline mic: live speech-to-text streams into the box; on stop
-            Groq enhances the wording. */}
+        {/* Small inline mic: tap to record; Groq Whisper transcribes + enhances. */}
         <div className="ta-wrap">
           <textarea
-            className={ai.desc ? "ta justfilled" : listening ? "ta listening" : "ta"}
+            className={ai.desc ? "ta justfilled" : "ta"}
             placeholder={t("descPh")}
             value={desc}
             onChange={(e) => {
@@ -281,21 +279,16 @@ export function AddReportScreen({
           />
           <InlineVoice
             lang={lang}
-            onInterim={(text) => {
-              setListening(true);
-              setDesc(text);
-            }}
             onFinal={(text) => {
-              setListening(false);
+              setVoiceNote(null);
               if (text) {
                 setDesc(text);
                 setAi((a) => ({ ...a, desc: true }));
               }
             }}
-            onError={(kind) => {
-              setListening(false);
-              setVoiceNote(kind === "denied" ? t("voiceDenied") : t("voiceFailed"));
-            }}
+            onError={(kind) =>
+              setVoiceNote(kind === "denied" ? t("voiceDenied") : t("voiceFailed"))
+            }
           />
         </div>
         {voiceNote && <p className="voice-note">{voiceNote}</p>}

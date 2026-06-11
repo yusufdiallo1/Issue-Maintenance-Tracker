@@ -80,10 +80,9 @@ export function Providers({
   );
 
   const setTheme = useCallback((th: Theme) => {
-    // Dark-only: remember the choice but always render dark.
     setThemeState(th);
     writePrefCookie(THEME_COOKIE, th);
-    document.documentElement.setAttribute("data-theme", "dark");
+    document.documentElement.setAttribute("data-theme", th);
   }, []);
 
   const langValue = useMemo<LangCtx>(

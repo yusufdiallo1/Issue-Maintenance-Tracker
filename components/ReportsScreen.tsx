@@ -2,16 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  ClipboardList,
-  LayoutGrid,
-  List as ListIcon,
-  RotateCw,
-  Search,
-  ChevronDown,
-} from "lucide-react";
+import { ClipboardList, LayoutGrid, List as ListIcon, RotateCw, Search } from "lucide-react";
 import { IssueCard } from "./IssueCard";
 import { IssueDetailSheet } from "./IssueDetailSheet";
+import { Dropdown } from "./Dropdown";
 import { EmptyState } from "./States";
 import { useLang } from "@/app/providers";
 import { createClient } from "@/lib/supabase/client";
@@ -325,19 +319,16 @@ export function ReportsScreen({
             aria-label={t("search")}
           />
         </div>
-        <div className="sortwrap">
-          <select
-            className="sortselect"
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
-            aria-label={t("sortNewest")}
-          >
-            <option value="newest">{t("sortNewest")}</option>
-            <option value="urgent">{t("sortUrgent")}</option>
-            <option value="deadline">{t("sortDeadline")}</option>
-          </select>
-          <ChevronDown className="chev" />
-        </div>
+        <Dropdown<SortKey>
+          value={sort}
+          ariaLabel={t("sortNewest")}
+          onChange={setSort}
+          options={[
+            { value: "newest", label: t("sortNewest") },
+            { value: "urgent", label: t("sortUrgent") },
+            { value: "deadline", label: t("sortDeadline") },
+          ]}
+        />
       </div>
 
       {/* status filter */}

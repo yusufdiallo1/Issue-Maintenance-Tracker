@@ -43,7 +43,7 @@ const THEME_COLOR_SCRIPT = `
     var dark = t === 'dark' || (t === 'auto' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches);
     var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute('content', dark ? '#0a0a0a' : '#f7f7f5');
+    if (m) m.setAttribute('content', dark ? '#0a0a0a' : '#fbfaf7');
   } catch (e) {}
 })();
 `;
@@ -55,14 +55,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     store.get(THEME_COOKIE)?.value,
   );
 
-  // Dark is the only real theme now — force it regardless of the stored choice
-  // (the profile toggle is kept but cosmetic). `theme` retained for the cookie.
-  void theme;
   return (
     <html
       lang={lang}
       dir={dirFor(lang)}
-      data-theme="dark"
+      data-theme={theme}
       className={`${geist.variable} ${geistMono.variable} ${notoBengali.variable} ${notoUrdu.variable}`}
     >
       <head>
