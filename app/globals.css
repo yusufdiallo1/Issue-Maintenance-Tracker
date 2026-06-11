@@ -2914,9 +2914,10 @@ button.input {
   flex-wrap: wrap;
 }
 .rt {
-  flex: 1;
-  min-width: 64px;
-  padding: 13px;
+  /* Size to the label; keep every name on ONE line (never wrap "Al-Salam"). */
+  flex: 1 1 auto;
+  white-space: nowrap;
+  padding: 13px 16px;
   border-radius: 16px;
   text-align: center;
   font-size: 14px;
