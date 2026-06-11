@@ -992,7 +992,7 @@ p.sub {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(env(safe-area-inset-bottom) + 14px);
+  bottom: calc(env(safe-area-inset-bottom) + 4px);
   margin: 0 auto;
   width: max-content;
   max-width: calc(100% - 30px);
@@ -1180,12 +1180,32 @@ p.sub {
   font-size: 17px;
   letter-spacing: -0.01em;
   transition:
-    transform 0.14s,
-    opacity 0.2s,
-    background 0.2s;
+    transform 0.08s ease,
+    opacity 0.15s,
+    background 0.15s;
 }
 .btn:active {
+  transform: scale(0.96);
+}
+/* Tactile press on every tappable row/control — instant feedback. */
+.setrow:active,
+.snav-item:active,
+.aud-btn:active,
+.emp:active,
+.rt:active,
+.ddchip:active,
+.chip:active,
+.iconbtn:active,
+.bell:active {
   transform: scale(0.97);
+}
+.setrow,
+.snav-item,
+.aud-btn {
+  transition:
+    transform 0.08s ease,
+    background 0.12s,
+    color 0.12s;
 }
 .btn.gold {
   color: var(--fill-text);
@@ -2087,23 +2107,44 @@ button.input {
 }
 
 /* ---- Push primer card (one-time, after login) ---- */
-.primer {
+/* Centered modal scrim so the primer never collides with other surfaces. */
+.primer-scrim {
   position: fixed;
-  z-index: 70;
-  inset-inline: 16px;
-  bottom: calc(env(safe-area-inset-bottom) + 96px);
-  margin-inline: auto;
-  max-width: 380px;
-  padding: 18px;
-  border-radius: 20px;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--scrim);
+  animation: fade 0.2s ease both;
+}
+.primer {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  padding: 22px;
+  border-radius: 22px;
   text-align: center;
-  background: var(--glass-nav);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  box-shadow:
-    inset 0 1px 0 var(--glass-specular),
-    var(--shadow-lg);
-  animation: toastin 0.32s ease both;
+  /* Solid card (not glass) — clear and legible. */
+  background: var(--glass-solid);
+  box-shadow: var(--shadow-lg);
+  animation: pop 0.26s cubic-bezier(0.34, 1.4, 0.5, 1) both;
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .primer,
+  .primer-scrim {
+    animation: none;
+  }
 }
 .primer-x {
   position: absolute;
@@ -2158,11 +2199,6 @@ button.input {
 .primer-install svg {
   width: 16px;
   height: 16px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .primer {
-    animation: none;
-  }
 }
 
 /* ---- Notifications inbox modal ---- */

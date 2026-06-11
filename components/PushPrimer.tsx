@@ -5,6 +5,7 @@ import { Bell, X, Share } from "lucide-react";
 import { usePush } from "@/lib/usePush";
 import { useLang } from "@/app/providers";
 import { useToast } from "./Toast";
+import { ModalPortal } from "./ModalPortal";
 
 const DISMISS_KEY = "aurion_push_primer_dismissed";
 
@@ -49,37 +50,43 @@ export function PushPrimer() {
   };
 
   return (
-    <div className="primer">
-      <button className="primer-x" onClick={dismiss} aria-label={t("cancel")}>
-        <X />
-      </button>
-      <div className="primer-ic">
-        <Bell />
-      </div>
-      <div className="primer-title">{t("primerTitle")}</div>
-      <div className="primer-body">{iosNeedsInstall ? t("primerInstall") : t("primerBody")}</div>
-      {!iosNeedsInstall && (
-        <button
-          className="btn gold"
-          disabled={busy}
-          onClick={async () => {
-            await subscribe();
-            // After the prompt resolves, dismiss regardless (granted or not).
-            localStorage.setItem(DISMISS_KEY, "1");
-            setOpen(false);
-            if (Notification.permission === "granted") show(t("pushOn"), "success");
-          }}
-        >
-          <Bell />
-          {t("primerEnable")}
-        </button>
-      )}
-      {iosNeedsInstall && (
-        <div className="primer-install">
-          <Share />
-          <span>{t("primerInstallStep")}</span>
+    <ModalPortal>
+      <div className="primer-scrim" onClick={dismiss}>
+        <div className="primer" onClick={(e) => e.stopPropagation()}>
+          <button className="primer-x" onClick={dismiss} aria-label={t("cancel")}>
+            <X />
+          </button>
+          <div className="primer-ic">
+            <Bell />
+          </div>
+          <div className="primer-title">{t("primerTitle")}</div>
+          <div className="primer-body">
+            {iosNeedsInstall ? t("primerInstall") : t("primerBody")}
+          </div>
+          {!iosNeedsInstall && (
+            <button
+              className="btn gold"
+              disabled={busy}
+              onClick={async () => {
+                await subscribe();
+                // After the prompt resolves, dismiss regardless (granted or not).
+                localStorage.setItem(DISMISS_KEY, "1");
+                setOpen(false);
+                if (Notification.permission === "granted") show(t("pushOn"), "success");
+              }}
+            >
+              <Bell />
+              {t("primerEnable")}
+            </button>
+          )}
+          {iosNeedsInstall && (
+            <div className="primer-install">
+              <Share />
+              <span>{t("primerInstallStep")}</span>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </ModalPortal>
   );
 }
