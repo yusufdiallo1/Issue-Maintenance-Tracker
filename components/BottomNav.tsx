@@ -13,11 +13,13 @@ import type { Key } from "@/lib/i18n/dictionary";
 export function BottomNav({
   items,
   active,
+  unread = false,
   onNavigate,
   onAdd,
 }: {
   items: NavItem[];
   active: string;
+  unread?: boolean;
   onNavigate: (id: string) => void;
   onAdd: () => void;
 }) {
@@ -27,14 +29,21 @@ export function BottomNav({
 
   return (
     <div className="nav glass">
-      <NavTab item={first} active={active} onNavigate={onNavigate} t={t} />
+      <NavTab item={first} active={active} unread={unread} onNavigate={onNavigate} t={t} />
       <button className="tab addtab" onClick={onAdd} aria-label={t("newReport")}>
         <span className="plusbtn">
           <Plus />
         </span>
       </button>
       {rest.map((item) => (
-        <NavTab key={item.id} item={item} active={active} onNavigate={onNavigate} t={t} />
+        <NavTab
+          key={item.id}
+          item={item}
+          active={active}
+          unread={unread}
+          onNavigate={onNavigate}
+          t={t}
+        />
       ))}
     </div>
   );
@@ -43,23 +52,29 @@ export function BottomNav({
 function NavTab({
   item,
   active,
+  unread,
   onNavigate,
   t,
 }: {
   item: NavItem;
   active: string;
+  unread: boolean;
   onNavigate: (id: string) => void;
   t: (key: Key) => string;
 }) {
   const { Icon } = item;
   const on = active === item.id;
+  const showDot = item.id === "reports" && unread && !on;
   return (
     <button
       className={on ? "tab on" : "tab"}
       onClick={() => onNavigate(item.id)}
       aria-current={on ? "page" : undefined}
     >
-      <Icon />
+      <span className="tab-ico">
+        <Icon />
+        {showDot && <span className="notif-dot" aria-hidden />}
+      </span>
       <span className="lbl">{t(item.labelKey)}</span>
     </button>
   );

@@ -731,6 +731,16 @@ html[data-theme="dark"] {
   background: var(--u-urgent);
   box-shadow: 0 0 0 2px var(--canvas);
 }
+.nav .tab .tab-ico {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+.nav .tab .tab-ico .notif-dot {
+  top: -2px;
+  inset-inline-end: -4px;
+  box-shadow: 0 0 0 2px var(--glass-nav);
+}
 .avatar svg {
   width: 19px;
   height: 19px;
