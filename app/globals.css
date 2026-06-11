@@ -448,6 +448,8 @@ select {
 :root {
   /* Adaptive specular + edge values (light defaults; overridden in dark). */
   --glass-bg: rgba(255, 255, 255, 0.55);
+  /* Opaque-frosted for nav + popover (can't see content behind). */
+  --glass-nav: rgba(248, 248, 246, 0.86);
   --glass-edge: rgba(255, 255, 255, 0.7);
   --glass-specular: rgba(255, 255, 255, 0.9);
   --glass-inner: rgba(0, 0, 0, 0.06);
@@ -456,6 +458,7 @@ select {
 }
 html[data-theme="dark"] {
   --glass-bg: rgba(20, 20, 22, 0.55);
+  --glass-nav: rgba(18, 18, 20, 0.9);
   --glass-edge: rgba(255, 255, 255, 0.14);
   --glass-specular: rgba(255, 255, 255, 0.5);
   --glass-inner: rgba(0, 0, 0, 0.5);
@@ -465,6 +468,7 @@ html[data-theme="dark"] {
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --glass-bg: rgba(20, 20, 22, 0.55);
+    --glass-nav: rgba(18, 18, 20, 0.9);
     --glass-edge: rgba(255, 255, 255, 0.14);
     --glass-specular: rgba(255, 255, 255, 0.5);
     --glass-inner: rgba(0, 0, 0, 0.5);
@@ -771,9 +775,9 @@ p.sub {
   padding: 6px;
   border-radius: 32px;
   z-index: 40;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(180%) brightness(1.05) url(#liquidGlass-sm);
-  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.05);
+  background: var(--glass-nav);
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.05);
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.05);
   border: 1px solid var(--glass-edge);
   box-shadow:
     inset 0 1px 0 var(--glass-specular),
@@ -2227,9 +2231,9 @@ button.input {
   inset-inline-end: 14px;
   z-index: 56;
   width: 250px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(180%) url(#liquidGlass);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: var(--glass-nav);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid var(--glass-edge);
   border-radius: 18px;
   box-shadow:
@@ -2319,7 +2323,7 @@ button.input {
 
 /* ---- Bottom sheet + scrim ---- */
 .scrim {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: var(--scrim);
   z-index: 50;
@@ -2387,13 +2391,14 @@ button.input {
 
 /* ---- Centered modal (detail) — same on all sizes, click-outside closes ---- */
 .scrim.modal-scrim {
-  /* Floating centered modal at ALL sizes (defeats the bottom-sheet default
-     and the >=860px center override alike). */
+  /* Floating centered modal at ALL sizes (viewport-fixed, not page-anchored).
+     Light frosted veil — the blur does the separation, not a dark box. */
   align-items: center !important;
   justify-content: center !important;
   padding: 20px;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(10, 10, 10, 0.18);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
 }
 .modal {
   width: 100%;

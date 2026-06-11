@@ -33,9 +33,9 @@ type SeedAccount = {
   role: Role;
 };
 
-// NOTE: admin display name is "Mor" per the latest spec (prototype said "Malsor").
+// Admin display name matches the account: "Malsor".
 const ACCOUNTS: SeedAccount[] = [
-  { username: "malsor", password: "malsor123", fullName: "Mor", role: "admin" },
+  { username: "malsor", password: "malsor123", fullName: "Malsor", role: "admin" },
   { username: "muhammad", password: "muhammad123", fullName: "Muhammad", role: "staff" },
   { username: "khalid", password: "khalid123", fullName: "Khalid", role: "staff" },
   { username: "noura", password: "noura123", fullName: "Noura", role: "staff" },

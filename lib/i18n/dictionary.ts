@@ -91,6 +91,7 @@ export const T = {
     ar: "لم نسمع ذلك جيدًا — اكتبه يدويًا.",
   },
   youSaid: { en: "You said", ar: "قلت" },
+  speaksLang: { en: "Language they speak", ar: "اللغة التي يتحدثها" },
   or: { en: "or fill it in", ar: "أو املأها يدويًا" },
   addPhoto: { en: "Add a photo", ar: "أضف صورة" },
   photoAdded: { en: "Photo added", ar: "تمت إضافة صورة" },

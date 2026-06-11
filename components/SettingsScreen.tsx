@@ -3,13 +3,11 @@
 import { useState, useTransition } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { AddEmployeeSheet } from "./AddEmployeeSheet";
-import { useLang, useTheme } from "@/app/providers";
+import { useLang } from "@/app/providers";
 import { fmtDateTime } from "@/lib/issues";
 import { auditText } from "@/lib/audit";
 import { removeEmployee } from "@/app/actions/employees";
 import type { ProfileFull, AuditRow } from "@/lib/data";
-import type { Lang } from "@/lib/i18n/dictionary";
-import type { Theme } from "@/lib/prefs";
 import { signOutAction } from "@/app/login/actions";
 
 function initial(name: string) {
@@ -27,59 +25,10 @@ export function SettingsScreen({
   team: ProfileFull[];
   audit: AuditRow[];
 }) {
-  const { lang, setLang, t } = useLang();
-  const { theme, setTheme } = useTheme();
+  const { lang, t } = useLang();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetEnter, setSheetEnter] = useState(false);
   const [, startTransition] = useTransition();
-
-  const langs: { id: Lang; label: string }[] = [
-    { id: "ar", label: "العربية" },
-    { id: "en", label: "English" },
-  ];
-  const themes: { id: Theme; label: string }[] = [
-    { id: "auto", label: t("system") },
-    { id: "light", label: t("light") },
-    { id: "dark", label: t("dark") },
-  ];
-
-  const prefs = (
-    <>
-      <div className="section-h">{t("language")}</div>
-      <div className="slist glass">
-        <div className="prow">
-          <div className="seg" style={{ width: "100%" }}>
-            {langs.map((l) => (
-              <button
-                key={l.id}
-                className={lang === l.id ? "on" : ""}
-                onClick={() => setLang(l.id)}
-              >
-                {l.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="section-h">{t("appearance")}</div>
-      <div className="slist glass">
-        <div className="prow">
-          <div className="seg" style={{ width: "100%" }}>
-            {themes.map((th) => (
-              <button
-                key={th.id}
-                className={theme === th.id ? "on" : ""}
-                onClick={() => setTheme(th.id)}
-              >
-                {th.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
 
   function remove(id: string) {
     startTransition(async () => {
@@ -150,8 +99,6 @@ export function SettingsScreen({
           </div>
         </>
       )}
-
-      {prefs}
 
       <form action={signOutAction}>
         <button

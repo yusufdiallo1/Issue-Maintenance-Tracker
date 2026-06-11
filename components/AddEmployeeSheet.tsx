@@ -22,8 +22,16 @@ export function AddEmployeeSheet({
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [role, setRole] = useState<"staff" | "admin">("staff");
+  const [language, setLanguage] = useState<"ar" | "en" | "bn" | "ur">("ar");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState(false);
+
+  const LANGS: { id: "ar" | "en" | "bn" | "ur"; label: string }[] = [
+    { id: "ar", label: "العربية" },
+    { id: "en", label: "English" },
+    { id: "bn", label: "বাংলা" },
+    { id: "ur", label: "اردو" },
+  ];
 
   if (!open) {
     return (
@@ -38,12 +46,13 @@ export function AddEmployeeSheet({
     if (!name.trim() || !username.trim() || !password.trim()) return;
     setError(false);
     startTransition(async () => {
-      const res = await addEmployee({ fullName: name, username, password, role });
+      const res = await addEmployee({ fullName: name, username, password, role, language });
       if (res.ok) {
         const added = name.trim();
         setName("");
         setUsername("");
         setRole("staff");
+        setLanguage("ar");
         onAdded(added);
       } else {
         setError(true);
@@ -90,6 +99,21 @@ export function AddEmployeeSheet({
             >
               {t("admin")}
             </button>
+          </div>
+        </div>
+        <div className="field">
+          <label>{t("speaksLang")}</label>
+          <div className="seg" style={{ width: "100%" }}>
+            {LANGS.map((l) => (
+              <button
+                key={l.id}
+                type="button"
+                className={language === l.id ? "on" : ""}
+                onClick={() => setLanguage(l.id)}
+              >
+                {l.label}
+              </button>
+            ))}
           </div>
         </div>
         <button

@@ -81,10 +81,7 @@ export function ProfileMenu({
               <button
                 key={th.id}
                 className={theme === th.id ? "on" : ""}
-                onClick={() => {
-                  setTheme(th.id);
-                  onClose();
-                }}
+                onClick={() => setTheme(th.id)}
               >
                 {th.label}
               </button>

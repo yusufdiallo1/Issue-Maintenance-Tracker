@@ -131,6 +131,7 @@ export type Database = {
           id: string;
           role: Database["public"]["Enums"]["user_role"];
           username: string;
+          preferred_language: string;
         };
         Insert: {
           created_at?: string;
@@ -138,6 +139,7 @@ export type Database = {
           id: string;
           role?: Database["public"]["Enums"]["user_role"];
           username: string;
+          preferred_language?: string;
         };
         Update: {
           created_at?: string;
@@ -145,6 +147,7 @@ export type Database = {
           id?: string;
           role?: Database["public"]["Enums"]["user_role"];
           username?: string;
+          preferred_language?: string;
         };
         Relationships: [];
       };
