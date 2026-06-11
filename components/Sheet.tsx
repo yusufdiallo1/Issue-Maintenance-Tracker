@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Bottom sheet + scrim. On desktop the CSS centers it and swaps the
- * slide-up for a pop-in. Entry animation is gated by `enter` so it only
- * plays when the sheet first opens, not on incidental re-renders.
+ * Floating centered modal (at ALL sizes) + scrim. Click-outside closes.
+ * Entry animation is gated by `enter` so it only plays on first open.
+ * (Formerly a bottom sheet on mobile — now centered everywhere per design.)
  */
 export function Sheet({
   open,
@@ -20,14 +20,13 @@ export function Sheet({
 }) {
   if (!open) return null;
   return (
-    <div className={enter ? "scrim enter" : "scrim"} onClick={onClose}>
+    <div className={enter ? "scrim modal-scrim enter" : "scrim modal-scrim"} onClick={onClose}>
       <div
-        className={enter ? "sheet enter" : "sheet"}
+        className={enter ? "modal enter" : "modal"}
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="grab" />
         {title && <h2>{title}</h2>}
         {children}
       </div>

@@ -9,6 +9,7 @@ import { createContext, useCallback, useContext, useMemo, useState } from "react
 import { t as rawT, tf as rawTf } from "@/lib/i18n/t";
 import type { Key, Lang } from "@/lib/i18n/dictionary";
 import { dirFor, LANG_COOKIE, THEME_COOKIE, writePrefCookie, type Theme } from "@/lib/prefs";
+import { ToastProvider } from "@/components/Toast";
 
 // ---- Language ----
 type LangCtx = {
@@ -82,7 +83,9 @@ export function Providers({
 
   return (
     <LangContext.Provider value={langValue}>
-      <ThemeContext.Provider value={themeValue}>{children}</ThemeContext.Provider>
+      <ThemeContext.Provider value={themeValue}>
+        <ToastProvider>{children}</ToastProvider>
+      </ThemeContext.Provider>
     </LangContext.Provider>
   );
 }

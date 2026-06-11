@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ClipboardList, LayoutGrid, List as ListIcon, RotateCw } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ClipboardList, LayoutGrid, List as ListIcon, RotateCw, Search } from "lucide-react";
 import { IssueCard } from "./IssueCard";
 import { IssueDetailSheet } from "./IssueDetailSheet";
+import { EmptyState } from "./States";
 import { useLang } from "@/app/providers";
 import { createClient } from "@/lib/supabase/client";
-import type { Issue } from "@/lib/issues";
+import { propMeta } from "@/lib/i18n/dictionary";
+import { isOverdue, type Issue } from "@/lib/issues";
 import type { ProfileLite } from "@/lib/data";
 
 type Filter = "all" | "urgent" | "new" | "progress" | "done";
 type View = "list" | "grid";
+type SortKey = "newest" | "urgent" | "deadline";
 
 const FILTERS: { id: Filter; key: "fAll" | "fUrgent" | "fNew" | "fProgress" | "fDone" }[] = [
   { id: "all", key: "fAll" },
@@ -19,8 +23,12 @@ const FILTERS: { id: Filter; key: "fAll" | "fUrgent" | "fNew" | "fProgress" | "f
   { id: "progress", key: "fProgress" },
   { id: "done", key: "fDone" },
 ];
+// Property filter — the three with rooms (whole-property units rarely filtered).
+const PROP_FILTERS = ["all", "as_salaam", "al_aqeeq", "quba"] as const;
+const PAGE = 20; // render this many at a time (infinite scroll)
+const URGENCY_RANK: Record<string, number> = { urgent: 0, soon: 1, wait: 2 };
 
-function applyFilter(list: Issue[], f: Filter): Issue[] {
+function applyStatusFilter(list: Issue[], f: Filter): Issue[] {
   switch (f) {
     case "urgent":
       return list.filter((i) => i.urgency === "urgent" && i.status !== "done");
@@ -46,14 +54,39 @@ export function ReportsScreen({
   currentUserId: string;
   isAdmin: boolean;
 }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const router = useRouter();
+  const params = useSearchParams();
   const [supabase] = useState(() => createClient());
   const [issues, setIssues] = useState<Issue[]>(initialIssues);
-  const [filter, setFilter] = useState<Filter>("all");
   const [view, setView] = useState<View>("list");
   const [detailId, setDetailId] = useState<number | null>(null);
-  // Gate the sheet entry animation to the open transition only.
   const [sheetEnter, setSheetEnter] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [limit, setLimit] = useState(PAGE);
+
+  // ---- Filter/sort/search state, seeded from + persisted to the URL ----
+  const [filter, setFilter] = useState<Filter>((params.get("status") as Filter) || "all");
+  const [propFilter, setPropFilter] = useState<string>(params.get("prop") || "all");
+  const [sort, setSort] = useState<SortKey>((params.get("sort") as SortKey) || "newest");
+  const [search, setSearch] = useState(params.get("q") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), 250);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  // Reflect state in the URL (shareable, survives refresh) without scrolling.
+  useEffect(() => {
+    const q = new URLSearchParams();
+    if (filter !== "all") q.set("status", filter);
+    if (propFilter !== "all") q.set("prop", propFilter);
+    if (sort !== "newest") q.set("sort", sort);
+    if (debouncedSearch.trim()) q.set("q", debouncedSearch.trim());
+    const qs = q.toString();
+    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
+  }, [filter, propFilter, sort, debouncedSearch, router]);
 
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -61,17 +94,14 @@ export function ReportsScreen({
     return m;
   }, [profiles]);
 
-  // Keep local state in sync when the server sends fresh data (e.g. after a
-  // submit triggers revalidatePath). Realtime handles live deltas; this catches
-  // the navigation-back case so a just-created report is never missing.
-  // Render-phase sync (the React-recommended pattern, not an effect):
+  // Render-phase sync when the server sends fresh data.
   const [seededFrom, setSeededFrom] = useState(initialIssues);
   if (seededFrom !== initialIssues) {
     setSeededFrom(initialIssues);
     setIssues(initialIssues);
   }
 
-  // Resolve a thumbnail (first photo) signed URL per issue, once.
+  // Thumbnail signed URLs (first photo per issue).
   const [thumbUrls, setThumbUrls] = useState<Record<number, string>>({});
   const thumbKey = issues.map((i) => `${i.id}:${i.photo_paths?.[0] ?? ""}`).join(",");
   useEffect(() => {
@@ -97,9 +127,7 @@ export function ReportsScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [thumbKey, supabase]);
 
-  // ---- Realtime: update the list in place, no refetch, no scroll jump ----
-  // Functional setState updates only the changed card; the scroll container is
-  // untouched and the list isn't re-animated.
+  // Realtime: prepend inserts, patch updates, drop deletes.
   useEffect(() => {
     const onChange = (payload: {
       eventType: "INSERT" | "UPDATE" | "DELETE";
@@ -123,37 +151,77 @@ export function ReportsScreen({
         return prev;
       });
     };
-
-    // Build the channel and register the listener BEFORE subscribing — the
-    // postgres_changes callback cannot be added after subscribe().
     const channel = supabase
       .channel(`issues-stream-${Math.floor(performance.now())}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "issues" }, onChange);
-
-    // RLS-protected tables need the user's token on the Realtime socket.
-    // setAuth applies to the shared socket; fire it, then subscribe.
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.access_token) supabase.realtime.setAuth(session.access_token);
       channel.subscribe();
     });
-
     return () => {
       supabase.removeChannel(channel);
     };
   }, [supabase]);
 
-  // Newest first (the DB already returns this order; keep it stable on updates).
-  const sorted = useMemo(
-    () =>
-      [...issues].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      ),
-    [issues],
-  );
-  const visible = useMemo(() => applyFilter(sorted, filter), [sorted, filter]);
+  // ---- Compose: search → property → status → sort ----
+  const processed = useMemo(() => {
+    const q = debouncedSearch.trim().toLowerCase();
+    let list = issues;
+    if (q) {
+      list = list.filter((i) => {
+        const reporter = (nameById.get(i.reported_by) ?? "").toLowerCase();
+        const taker = i.taken_by ? (nameById.get(i.taken_by) ?? "").toLowerCase() : "";
+        return (
+          i.room.toLowerCase().includes(q) ||
+          (i.description ?? "").toLowerCase().includes(q) ||
+          (i.description_ar ?? "").toLowerCase().includes(q) ||
+          reporter.includes(q) ||
+          taker.includes(q)
+        );
+      });
+    }
+    if (propFilter !== "all") list = list.filter((i) => i.property === propFilter);
+    list = applyStatusFilter(list, filter);
+    const arr = [...list];
+    arr.sort((a, b) => {
+      if (sort === "urgent") {
+        const d = (URGENCY_RANK[a.urgency] ?? 9) - (URGENCY_RANK[b.urgency] ?? 9);
+        if (d !== 0) return d;
+      } else if (sort === "deadline") {
+        const ao = isOverdue(a) ? 0 : a.deadline ? 1 : 2;
+        const bo = isOverdue(b) ? 0 : b.deadline ? 1 : 2;
+        if (ao !== bo) return ao - bo;
+      }
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+    return arr;
+  }, [issues, debouncedSearch, propFilter, filter, sort, nameById]);
+
+  // Reset the page window when the query changes (render-phase, not an effect).
+  const queryKey = `${debouncedSearch}|${propFilter}|${filter}|${sort}`;
+  const [lastQueryKey, setLastQueryKey] = useState(queryKey);
+  if (lastQueryKey !== queryKey) {
+    setLastQueryKey(queryKey);
+    setLimit(PAGE);
+  }
+
+  const visible = processed.slice(0, limit);
+  const hasMore = processed.length > limit;
+
+  // Infinite scroll: grow the window when the sentinel enters view.
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => entries[0]?.isIntersecting && setLimit((n) => n + PAGE),
+      { rootMargin: "400px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, visible.length]);
 
   const detail = detailId != null ? (issues.find((i) => i.id === detailId) ?? null) : null;
-  const [refreshing, setRefreshing] = useState(false);
 
   async function refresh() {
     setRefreshing(true);
@@ -183,6 +251,9 @@ export function ReportsScreen({
       onOpen={openDetail}
     />
   ));
+
+  const propLabel = (code: string) =>
+    code === "all" ? t("fAllProps") : (propMeta(code)?.[lang] ?? code);
 
   return (
     <div className="screen">
@@ -218,6 +289,32 @@ export function ReportsScreen({
         </div>
       </div>
 
+      {/* search + sort */}
+      <div className="reports-toolbar">
+        <div className="searchwrap">
+          <Search />
+          <input
+            className="searchinput"
+            type="search"
+            placeholder={t("searchPh")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label={t("search")}
+          />
+        </div>
+        <select
+          className="sortselect"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortKey)}
+          aria-label={t("sortNewest")}
+        >
+          <option value="newest">{t("sortNewest")}</option>
+          <option value="urgent">{t("sortUrgent")}</option>
+          <option value="deadline">{t("sortDeadline")}</option>
+        </select>
+      </div>
+
+      {/* status filter */}
       <div className="filterbar">
         {FILTERS.map((f) => (
           <button
@@ -230,17 +327,33 @@ export function ReportsScreen({
         ))}
       </div>
 
-      {visible.length > 0 ? (
-        view === "grid" ? (
-          <div className="issuegrid">{cards}</div>
-        ) : (
-          cards
-        )
+      {/* property filter */}
+      <div className="filterbar">
+        {PROP_FILTERS.map((p) => (
+          <button
+            key={p}
+            className={propFilter === p ? "fchip on" : "fchip"}
+            onClick={() => setPropFilter(p)}
+          >
+            {propLabel(p)}
+          </button>
+        ))}
+      </div>
+
+      {processed.length > 0 ? (
+        <>
+          {view === "grid" ? <div className="issuegrid">{cards}</div> : cards}
+          {hasMore && <div ref={sentinelRef} className="loadmore-sentinel" aria-hidden />}
+        </>
       ) : (
-        <div className="empty">
-          <ClipboardList />
-          <div>{t("noIssues")}</div>
-        </div>
+        <EmptyState
+          icon={ClipboardList}
+          message={
+            debouncedSearch || propFilter !== "all" || filter !== "all"
+              ? t("noResults")
+              : t("noIssues")
+          }
+        />
       )}
 
       <IssueDetailSheet
