@@ -9,6 +9,7 @@ import { useLang } from "@/app/providers";
 import { propMeta, TYPES, URG, TAGS } from "@/lib/i18n/dictionary";
 import { urgencyColor } from "@/lib/issues";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "./Toast";
 import { createReport } from "@/app/actions/issues";
 
 type Urgency = "urgent" | "soon" | "wait";
@@ -36,6 +37,7 @@ export function AddReportScreen({
   roomsByProperty?: Record<string, string[]>;
 }) {
   const { t, lang } = useLang();
+  const { show } = useToast();
   const [supabase] = useState(() => createClient());
 
   const [desc, setDesc] = useState("");
@@ -146,18 +148,27 @@ export function AddReportScreen({
     const labelById = new Map(customTags.map((c) => [c.id, c.label]));
     const tagValues = tags.map((id) => (labelById.has(id) ? `custom:${labelById.get(id)}` : id));
     startTransition(async () => {
-      const res = await createReport({
-        property: roomProp,
-        room: room ?? "",
-        type,
-        urgency: urg,
-        description: baseDesc,
-        descriptionAr: "",
-        tags: tagValues,
-        photoPaths: photos.filter((p) => p.path).map((p) => p.path as string),
-        lang,
-      });
-      if (res.ok) setSent({ ticket: res.id, prop: roomProp, room: room ?? "" });
+      try {
+        const res = await createReport({
+          property: roomProp,
+          room: room ?? "",
+          type,
+          urgency: urg,
+          description: baseDesc,
+          descriptionAr: "",
+          tags: tagValues,
+          photoPaths: photos.filter((p) => p.path).map((p) => p.path as string),
+          lang,
+        });
+        if (res.ok) {
+          show(t("saved"), "success");
+          setSent({ ticket: res.id, prop: roomProp, room: room ?? "" });
+        } else {
+          show(t("loadError"), "error");
+        }
+      } catch {
+        show(t("loadError"), "error");
+      }
     });
   }
 

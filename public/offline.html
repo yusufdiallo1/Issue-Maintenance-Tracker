@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aurion Maintenance — Offline</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #0a0a0a;
+        color: #fafafa;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        text-align: center;
+        padding: 24px;
+      }
+      .card {
+        max-width: 340px;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 8px;
+        letter-spacing: -0.02em;
+      }
+      p {
+        color: #a0a0a3;
+        line-height: 1.5;
+        margin: 0;
+      }
+      .mark {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img class="mark" src="/icon.svg" alt="Aurion" />
+      <h1>لا يوجد اتصال — You're offline</h1>
+      <p>
+        تحقّق من اتصالك وسيعود التطبيق تلقائيًا.<br />
+        Check your connection — the app will reload automatically.
+      </p>
+    </div>
+    <script>
+      window.addEventListener("online", () => location.reload());
+    </script>
+  </body>
+</html>

@@ -6,6 +6,10 @@ import { CategoryIcon } from "./CategoryIcon";
 import { useLang } from "@/app/providers";
 import { propMeta } from "@/lib/i18n/dictionary";
 import { createClient } from "@/lib/supabase/client";
+import { useScrollLock } from "@/lib/useScrollLock";
+import { useOnline } from "@/lib/useOnline";
+import { useToast } from "./Toast";
+import { enqueue, uuid, type OutboxKind } from "@/lib/outbox";
 import {
   dueLabelKey,
   fmtDateTime,
@@ -47,6 +51,9 @@ export function IssueDetailSheet({
   onClose: () => void;
 }) {
   const { t, lang } = useLang();
+  useScrollLock(open);
+  const online = useOnline();
+  const { show } = useToast();
   const [pending, startTransition] = useTransition();
   const [supabase] = useState(() => createClient());
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
@@ -79,7 +86,31 @@ export function IssueDetailSheet({
   const mine = issue.taken_by === currentUserId;
   const desc = (lang === "ar" ? issue.description_ar : issue.description) || issue.description;
 
-  const run = (fn: () => Promise<unknown>) => startTransition(() => void fn());
+  // Run a lifecycle mutation: toast on success, queue to the outbox on
+  // offline/failure (so it syncs when back online — realtime then broadcasts
+  // the change to every device). Closing the sheet gives instant feedback.
+  const run = (
+    kind: OutboxKind,
+    fn: () => Promise<{ ok?: boolean } | unknown>,
+    extra: Record<string, unknown> = {},
+  ) => {
+    const payload = { issueId: issue.id, ...extra };
+    if (!online) {
+      void enqueue({ id: uuid(), kind, payload });
+      show(t("queuedOffline"), "info");
+      onClose();
+      return;
+    }
+    startTransition(async () => {
+      try {
+        await fn();
+        show(t("saved"), "success");
+      } catch {
+        await enqueue({ id: uuid(), kind, payload });
+        show(t("queuedOffline"), "info");
+      }
+    });
+  };
 
   // Action button per state (matches the prototype rules).
   let action: React.ReactNode = null;
@@ -90,7 +121,7 @@ export function IssueDetailSheet({
           <button
             className="abtn reopen"
             disabled={pending}
-            onClick={() => run(() => reopenIssue(issue.id))}
+            onClick={() => run("reopen", () => reopenIssue(issue.id))}
           >
             <ArrowDownToLine />
             {t("reopen")}
@@ -104,7 +135,7 @@ export function IssueDetailSheet({
         <button
           className="abtn take"
           disabled={pending}
-          onClick={() => run(() => takeIssue(issue.id))}
+          onClick={() => run("take", () => takeIssue(issue.id))}
         >
           <ArrowDownToLine />
           {t("take")}
@@ -117,7 +148,7 @@ export function IssueDetailSheet({
         <button
           className="abtn done"
           disabled={pending}
-          onClick={() => run(() => markDone(issue.id))}
+          onClick={() => run("done", () => markDone(issue.id))}
         >
           <Check />
           {t("markDone")}
@@ -240,7 +271,9 @@ export function IssueDetailSheet({
                   key={o.id}
                   className={issue.deadline === o.id ? "ddchip on" : "ddchip"}
                   disabled={pending}
-                  onClick={() => run(() => setDeadline(issue.id, o.id))}
+                  onClick={() =>
+                    run("deadline", () => setDeadline(issue.id, o.id), { deadline: o.id })
+                  }
                 >
                   {t(o.key)}
                 </button>
@@ -249,7 +282,7 @@ export function IssueDetailSheet({
                 <button
                   className="ddchip clear"
                   disabled={pending}
-                  onClick={() => run(() => clearDeadline(issue.id))}
+                  onClick={() => run("deadline", () => clearDeadline(issue.id), { deadline: null })}
                 >
                   {t("clearDl")}
                 </button>

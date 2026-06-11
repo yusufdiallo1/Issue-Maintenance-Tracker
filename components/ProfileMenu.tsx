@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { User, LogOut } from "lucide-react";
 import { useLang, useTheme } from "@/app/providers";
+import { ConfirmDialog } from "./ConfirmDialog";
 import type { Lang } from "@/lib/i18n/dictionary";
 import type { Theme } from "@/lib/prefs";
 
@@ -26,6 +28,7 @@ export function ProfileMenu({
 }) {
   const { lang, setLang, t } = useLang();
   const { theme, setTheme } = useTheme();
+  const [confirmOut, setConfirmOut] = useState(false);
   if (!open) return null;
 
   const langs: { id: Lang; label: string }[] = [
@@ -89,13 +92,29 @@ export function ProfileMenu({
           </div>
         </div>
 
-        <form action={signOutAction}>
-          <button className="signout-row" type="submit" role="menuitem">
-            <LogOut />
-            {t("signout")}
-          </button>
-        </form>
+        <button
+          className="signout-row"
+          type="button"
+          role="menuitem"
+          onClick={() => setConfirmOut(true)}
+        >
+          <LogOut />
+          {t("signout")}
+        </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmOut}
+        title={t("signoutQ")}
+        message={t("signoutMsg")}
+        confirmLabel={t("signout")}
+        danger
+        onCancel={() => setConfirmOut(false)}
+        onConfirm={() => {
+          setConfirmOut(false);
+          void signOutAction();
+        }}
+      />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { LiquidGlassFilter } from "@/components/LiquidGlassFilter";
+import { ServiceWorker } from "@/components/ServiceWorker";
 import { dirFor, LANG_COOKIE, normalizePrefs, THEME_COOKIE } from "@/lib/prefs";
 
 // Resend-style precision: Geist for UI, Geist Mono for IDs / rooms / timestamps
@@ -62,6 +63,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         {/* Premium matte film-grain (dark only); pointer-events none. */}
         <div className="grain" aria-hidden />
         <LiquidGlassFilter />
+        <ServiceWorker />
         <Providers initialLang={lang} initialTheme={theme}>
           {children}
         </Providers>

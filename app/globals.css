@@ -13,7 +13,10 @@
   --dim: #6e6e73;
   --faint: #86868b;
   --hair: #d2d2d7;
-  --border: #e5e5ea;
+  /* Borders removed app-wide in favour of deep shadows (transparent here so the
+     ~20 `border: 1px solid var(--border)` sites vanish without per-rule edits). */
+  --border: transparent;
+  --control-bg: #ededed;
   --accent: #946712;
   --accent-soft: rgba(198, 162, 83, 0.16);
   --fill: #c6a253;
@@ -22,7 +25,8 @@
   --u-urgent: #c8442a;
   --u-soon: #a9791e;
   --u-wait: #2c8a57;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 8px 24px -16px rgba(0, 0, 0, 0.22);
+  /* Apple-style deep soft shadow — replaces hairline borders on surfaces. */
+  --shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 14px 34px -14px rgba(0, 0, 0, 0.16);
   --shadow-lg: 0 30px 60px -30px rgba(0, 0, 0, 0.3);
   --nav-bg: rgba(255, 255, 255, 0.86);
   --sheet-bg: #ffffff;
@@ -40,7 +44,8 @@
     --dim: #a0a0a3;
     --faint: #6f6f74;
     --hair: #232325;
-    --border: #232325;
+    --border: transparent;
+    --control-bg: #1c1c1f;
     --accent: #e3c383;
     --accent-soft: rgba(225, 192, 120, 0.13);
     --fill: #c6a253;
@@ -49,8 +54,8 @@
     --u-urgent: #ff6a52;
     --u-soon: #e0aa46;
     --u-wait: #4cc585;
-    --shadow: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 8px 24px -18px rgba(0, 0, 0, 0.8);
-    --shadow-lg: 0 24px 60px -30px rgba(0, 0, 0, 0.9);
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 16px 40px -16px rgba(0, 0, 0, 0.7);
+    --shadow-lg: 0 24px 60px -24px rgba(0, 0, 0, 0.95);
     --nav-bg: rgba(12, 12, 13, 0.72);
     --sheet-bg: #0c0c0d;
     --scrim: rgba(0, 0, 0, 0.62);
@@ -66,7 +71,10 @@ html[data-theme="light"] {
   --dim: #6e6e73;
   --faint: #86868b;
   --hair: #d2d2d7;
-  --border: #e5e5ea;
+  /* Borders removed app-wide in favour of deep shadows (transparent here so the
+     ~20 `border: 1px solid var(--border)` sites vanish without per-rule edits). */
+  --border: transparent;
+  --control-bg: #ededed;
   --accent: #946712;
   --accent-soft: rgba(198, 162, 83, 0.16);
   --fill: #c6a253;
@@ -75,7 +83,8 @@ html[data-theme="light"] {
   --u-urgent: #c8442a;
   --u-soon: #a9791e;
   --u-wait: #2c8a57;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 8px 24px -16px rgba(0, 0, 0, 0.22);
+  /* Apple-style deep soft shadow — replaces hairline borders on surfaces. */
+  --shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 14px 34px -14px rgba(0, 0, 0, 0.16);
   --shadow-lg: 0 30px 60px -30px rgba(0, 0, 0, 0.3);
   --nav-bg: rgba(255, 255, 255, 0.86);
   --sheet-bg: #fff;
@@ -94,7 +103,8 @@ html[data-theme="dark"] {
   --dim: #a0a0a3;
   --faint: #6f6f74;
   --hair: #232325;
-  --border: #232325;
+  --border: transparent;
+  --control-bg: #1c1c1f;
   --accent: #e3c383;
   --accent-soft: rgba(225, 192, 120, 0.13);
   --fill: #c6a253;
@@ -431,12 +441,32 @@ select {
   font-weight: 600;
 }
 
-/* ---- Flat Resend card (matte; NOT glass) ---- */
+/* ---- Card surface: no border, Apple-style deep shadow ---- */
 .glass {
   background: var(--card);
-  border: 1px solid var(--border);
+  border: none;
   box-shadow: var(--shadow);
   position: relative;
+}
+
+/* App-wide hover/press micro-interactions (off under reduced motion).
+   Lift only INTERACTIVE cards; container cards (.slist, .ai-recap) stay put. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .issue:hover {
+    box-shadow: var(--shadow-lg);
+  }
+  .btn,
+  .iconbtn {
+    transition:
+      transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.16s ease,
+      box-shadow 0.16s ease;
+  }
+  .btn:hover,
+  .iconbtn:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
 }
 
 /* ============================================================
@@ -449,7 +479,9 @@ select {
   /* Adaptive specular + edge values (light defaults; overridden in dark). */
   --glass-bg: rgba(255, 255, 255, 0.55);
   /* Opaque-frosted for nav + popover (can't see content behind). */
-  --glass-nav: rgba(248, 248, 246, 0.86);
+  --glass-nav: rgba(248, 248, 246, 0.96);
+  /* Solid frosted for modals/sheets — content behind never reads through. */
+  --glass-solid: #f4f4f2;
   --glass-edge: rgba(255, 255, 255, 0.7);
   --glass-specular: rgba(255, 255, 255, 0.9);
   --glass-inner: rgba(0, 0, 0, 0.06);
@@ -458,7 +490,8 @@ select {
 }
 html[data-theme="dark"] {
   --glass-bg: rgba(20, 20, 22, 0.55);
-  --glass-nav: rgba(18, 18, 20, 0.9);
+  --glass-nav: rgba(16, 16, 18, 0.97);
+  --glass-solid: #161618;
   --glass-edge: rgba(255, 255, 255, 0.14);
   --glass-specular: rgba(255, 255, 255, 0.5);
   --glass-inner: rgba(0, 0, 0, 0.5);
@@ -468,7 +501,8 @@ html[data-theme="dark"] {
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --glass-bg: rgba(20, 20, 22, 0.55);
-    --glass-nav: rgba(18, 18, 20, 0.9);
+    --glass-nav: rgba(16, 16, 18, 0.97);
+    --glass-solid: #161618;
     --glass-edge: rgba(255, 255, 255, 0.14);
     --glass-specular: rgba(255, 255, 255, 0.5);
     --glass-inner: rgba(0, 0, 0, 0.5);
@@ -604,7 +638,7 @@ html[data-theme="dark"] {
   animation: aurion-spin 0.7s linear infinite;
 }
 
-/* ---- Top bar (mobile) ---- */
+/* ---- Top bar (mobile) — no border, Apple-style deep shadow ---- */
 .topbar {
   flex: none;
   padding: calc(env(safe-area-inset-top) + 12px) 18px 10px;
@@ -613,6 +647,7 @@ html[data-theme="dark"] {
   gap: 11px;
   z-index: 30;
   background: var(--canvas);
+  box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.3);
 }
 .brandmark {
   width: 29px;
@@ -817,7 +852,18 @@ p.sub {
 }
 .nav .tab.on {
   color: var(--accent);
-  background: var(--accent-soft);
+  /* Liquid-glass thumb: frosted pill + gold-tinted specular highlight. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 26%, transparent),
+    color-mix(in srgb, var(--accent) 8%, transparent)
+  );
+  -webkit-backdrop-filter: blur(2px) saturate(180%) brightness(1.08);
+  backdrop-filter: blur(2px) saturate(180%) brightness(1.08);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -6px 12px -8px rgba(0, 0, 0, 0.25),
+    0 4px 12px -6px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 .nav .tab.on svg {
   color: var(--accent);
@@ -1171,16 +1217,24 @@ button.input {
 .filterbar::-webkit-scrollbar {
   display: none;
 }
+/* Liquid-glass filter pills. */
 .fchip {
   flex: none;
-  padding: 8px 16px;
+  padding: 9px 17px;
   border-radius: 980px;
   font-size: 14px;
-  font-weight: 500;
-  background: var(--card);
-  border: 1px solid var(--border);
+  font-weight: 600;
   color: var(--dim);
-  transition: transform 0.12s;
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 var(--glass-specular),
+    0 4px 12px -8px rgba(0, 0, 0, 0.3);
+  transition:
+    transform 0.14s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.18s,
+    box-shadow 0.18s;
 }
 .fchip:active {
   transform: scale(0.95);
@@ -1188,8 +1242,10 @@ button.input {
 .fchip.on {
   background: var(--text);
   color: var(--canvas);
-  border-color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 6px 16px -8px rgba(0, 0, 0, 0.4);
 }
 
 /* ---- Issue card ---- */
@@ -1501,6 +1557,49 @@ button.input {
 }
 
 /* ---- Toast ---- */
+/* Global sync status pill (offline / syncing / synced). */
+.sync-pill {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 85;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 980px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  background: var(--glass-nav);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 var(--glass-specular),
+    var(--shadow);
+  animation: toastin 0.3s ease both;
+}
+.sync-pill.sync-offline {
+  color: var(--u-soon);
+}
+.sync-pill.sync-synced {
+  color: var(--u-wait);
+}
+.sync-pill svg {
+  width: 15px;
+  height: 15px;
+}
+.sync-pill .spin {
+  animation: aurion-spin 0.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sync-pill,
+  .sync-pill .spin {
+    animation: none;
+  }
+}
+
 /* Global toast layer: fixed, stacks above everything, centered horizontally. */
 .toast-layer {
   position: fixed;
@@ -2344,11 +2443,12 @@ button.input {
   overflow-y: auto;
   border-radius: 22px 22px 0 0;
   padding: 8px 20px calc(env(safe-area-inset-bottom) + 24px);
-  background: var(--glass-bg);
-  backdrop-filter: blur(28px) saturate(190%) url(#liquidGlass-lg);
+  background: var(--glass-solid);
+  backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
-  border-top: 1px solid var(--glass-edge);
-  box-shadow: inset 0 1px 0 var(--glass-specular);
+  box-shadow:
+    inset 0 1px 0 var(--glass-specular),
+    var(--glass-key);
 }
 @supports not (backdrop-filter: url(#liquidGlass)) {
   .sheet,
@@ -2407,10 +2507,9 @@ button.input {
   overflow-y: auto;
   border-radius: 24px;
   padding: 22px 22px calc(22px + env(safe-area-inset-bottom));
-  background: var(--glass-bg);
-  backdrop-filter: blur(28px) saturate(190%) url(#liquidGlass-lg);
+  background: var(--glass-solid);
+  backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
-  border: 1px solid var(--glass-edge);
   box-shadow:
     inset 0 1px 0 var(--glass-specular),
     var(--shadow-lg);
@@ -2567,6 +2666,214 @@ button.input {
   height: 100%;
   border-radius: 980px;
   background: var(--fill);
+}
+
+/* ============================================================
+   SUMMARY ANALYTICS — hand-built SVG/CSS charts (donut, area, bars)
+   Themed to gold/glass; works in light + dark via CSS vars only.
+   ============================================================ */
+
+/* Staggered entrance for the dashboard sections. */
+@media (prefers-reduced-motion: no-preference) {
+  .summary-screen .sum-anim {
+    animation: sum-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .summary-screen .sum-anim:nth-of-type(1) {
+    animation-delay: 0.02s;
+  }
+  .summary-screen .sum-anim:nth-of-type(2) {
+    animation-delay: 0.06s;
+  }
+  .summary-screen .sum-anim:nth-of-type(3) {
+    animation-delay: 0.1s;
+  }
+  .summary-screen .sum-anim:nth-of-type(n + 4) {
+    animation-delay: 0.14s;
+  }
+}
+@keyframes sum-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- Donut chart ---- */
+.donut-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  flex-wrap: wrap;
+}
+.donut-wrap {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  flex: 0 0 auto;
+}
+.donut {
+  width: 140px;
+  height: 140px;
+  display: block;
+}
+.donut-arc {
+  transition: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .donut-arc {
+    stroke-dasharray: 0 var(--full);
+    animation: donut-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes donut-grow {
+    to {
+      stroke-dasharray: var(--dash) var(--full);
+    }
+  }
+}
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.donut-total {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--text);
+}
+.donut-cap {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--faint);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+.donut-legend {
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.donut-legend li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.donut-legend .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: 0 0 auto;
+}
+.donut-legend .lg-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.donut-legend .lg-val {
+  color: var(--faint);
+  font-size: 13px;
+}
+
+/* ---- Area / line trend chart ---- */
+.trend-card {
+  padding: 16px 16px 12px;
+}
+.trend-legend {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--faint);
+}
+.trend-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.trend-legend .sw {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.trend-legend .sw-created {
+  background: var(--fill);
+}
+.trend-legend .sw-resolved {
+  background: var(--accent);
+}
+.area-chart {
+  width: 100%;
+  height: 120px;
+  display: block;
+  overflow: visible;
+}
+.area-grid {
+  stroke: var(--card2);
+  stroke-width: 1;
+}
+.area-fill {
+  stroke: none;
+}
+.area-line-created {
+  stroke: var(--fill);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.area-line-resolved {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 4 4;
+  opacity: 0.85;
+  vector-effect: non-scaling-stroke;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .area-fill,
+  .area-line-created,
+  .area-line-resolved {
+    animation: area-fade 0.7s ease 0.15s both;
+  }
+  @keyframes area-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  .area-line-resolved {
+    animation-name: area-fade-dash;
+  }
+  @keyframes area-fade-dash {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 0.85;
+    }
+  }
 }
 
 /* ---- My reports: checklist + tracking rows ---- */

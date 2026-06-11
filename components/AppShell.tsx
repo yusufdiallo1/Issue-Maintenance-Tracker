@@ -10,6 +10,7 @@ import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { BottomNav } from "./BottomNav";
 import { ProfileMenu } from "./ProfileMenu";
+import { SyncPill } from "./SyncPill";
 import { ReportsScreen } from "./ReportsScreen";
 import { AddReportScreen } from "./AddReportScreen";
 import { MyReportsScreen } from "./MyReportsScreen";
@@ -97,7 +98,7 @@ export function AppShell({
       />
     );
   } else {
-    screen = <SettingsScreen role={role} currentUserId={currentUserId} team={team} audit={audit} />;
+    screen = <SettingsScreen userName={userName} role={role} />;
   }
 
   return (
@@ -136,6 +137,8 @@ export function AppShell({
         onClose={() => setMenuOpen(false)}
         signOutAction={signOutAction}
       />
+
+      <SyncPill />
     </div>
   );
 }
