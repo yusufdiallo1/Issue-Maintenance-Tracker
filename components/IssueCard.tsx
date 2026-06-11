@@ -76,7 +76,7 @@ export function IssueCard({
             </span>
           )}
           {(issue.tags ?? []).map((tag) => {
-            const label = tagDisplay(tag, t);
+            const label = tagDisplay(tag, t, { tagTranslations: issue.tag_translations, lang });
             return label ? (
               <span key={tag} className="tagmini">
                 {label}

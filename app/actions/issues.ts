@@ -45,6 +45,22 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
   // description_ar kept for the legacy card reader; description holds the original.
   const ar = translations.ar ?? base;
 
+  // Translate CUSTOM tag labels (custom:<label>) into all 4 languages too.
+  const tagTranslations: Record<string, Record<string, string>> = {};
+  const customLabels = (input.tags ?? [])
+    .filter((tg) => tg.startsWith("custom:"))
+    .map((tg) => tg.slice(7));
+  if (customLabels.length) {
+    await Promise.all(
+      customLabels.map(async (label) => {
+        tagTranslations[label] = (await translateAll(label, detectLang(label))) as Record<
+          string,
+          string
+        >;
+      }),
+    );
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("issues")
@@ -58,6 +74,7 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
       description_ar: ar,
       source_language: source,
       description_translations: translations,
+      tag_translations: tagTranslations,
       tags: input.tags ?? [],
       photo_paths: input.photoPaths ?? [],
       photo_path: input.photoPaths?.[0] ?? null,
@@ -82,12 +99,22 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
         const { sendPushToUsers, adminUserIds } = await import("@/lib/push");
         const admins = (await adminUserIds()).filter((id) => id !== me.id);
         const where = `${propLabelEn(input.property)}${input.room ? " " + input.room : ""}`;
-        await sendPushToUsers(admins, {
-          title: isSafety ? "⚠️ Safety report" : "🔴 Urgent report",
-          body: `${where}: ${input.description || "New issue"}`.slice(0, 140),
-          url: "/",
-          tag: `issue-${data.id}`,
-        });
+        const title = isSafety ? "⚠️ Safety report" : "🔴 Urgent report";
+        const body = `${where}: ${input.description || "New issue"}`.slice(0, 140);
+        // Persist a notification-feed row per admin (the bell inbox).
+        const admin = createAdminClient();
+        if (admins.length) {
+          await admin.from("notifications").insert(
+            admins.map((uid) => ({
+              user_id: uid,
+              kind: isSafety ? "safety" : "urgent",
+              issue_id: data.id,
+              title,
+              body,
+            })),
+          );
+        }
+        await sendPushToUsers(admins, { title, body, url: "/", tag: `issue-${data.id}` });
       } catch {
         /* ignore */
       }

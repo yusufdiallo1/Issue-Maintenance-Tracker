@@ -58,7 +58,7 @@ export function ProfileMenu({
 
         <div className="mrow">
           <div className="ml">{t("language")}</div>
-          <div className="seg">
+          <div className="seg seg-lang">
             {langs.map((l) => (
               <button
                 key={l.id}

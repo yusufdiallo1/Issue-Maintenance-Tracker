@@ -893,7 +893,31 @@ p.sub {
     backdrop-filter: blur(20px) saturate(180%);
   }
 }
+/* The sliding liquid-glass thumb behind the active tab. */
+.nav-thumb {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  border-radius: 26px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 26%, transparent),
+    color-mix(in srgb, var(--accent) 8%, transparent)
+  );
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -6px 12px -8px rgba(0, 0, 0, 0.25),
+    0 4px 12px -6px color-mix(in srgb, var(--accent) 50%, transparent);
+  transition:
+    transform 0.42s cubic-bezier(0.34, 1.4, 0.5, 1),
+    width 0.42s cubic-bezier(0.34, 1.4, 0.5, 1);
+  pointer-events: none;
+  z-index: 0;
+}
 .nav .tab {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -902,9 +926,7 @@ p.sub {
   border-radius: 26px;
   color: var(--faint);
   min-width: 58px;
-  transition:
-    color 0.2s,
-    background 0.2s;
+  transition: color 0.25s;
 }
 .nav .tab svg {
   width: 23px;
@@ -921,22 +943,15 @@ p.sub {
 }
 .nav .tab.on {
   color: var(--accent);
-  /* Liquid-glass thumb: frosted pill + gold-tinted specular highlight. */
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--accent) 26%, transparent),
-    color-mix(in srgb, var(--accent) 8%, transparent)
-  );
-  -webkit-backdrop-filter: blur(2px) saturate(180%) brightness(1.08);
-  backdrop-filter: blur(2px) saturate(180%) brightness(1.08);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.4),
-    inset 0 -6px 12px -8px rgba(0, 0, 0, 0.25),
-    0 4px 12px -6px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 .nav .tab.on svg {
   color: var(--accent);
   animation: navpop 0.4s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-thumb {
+    transition: none;
+  }
 }
 @keyframes navpop {
   0% {
@@ -1646,6 +1661,79 @@ button.input {
   margin: 0 2px 14px;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* ---- Notifications inbox modal ---- */
+.notif-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.notif-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  text-align: start;
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--control-bg);
+  transition:
+    transform 0.14s,
+    background 0.18s;
+}
+.notif-row:active {
+  transform: scale(0.99);
+}
+.notif-row.unread {
+  background: color-mix(in srgb, var(--accent) 10%, var(--control-bg));
+}
+.notif-ic {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+}
+.notif-ic svg {
+  width: 18px;
+  height: 18px;
+}
+.notif-ic.urgent {
+  background: color-mix(in srgb, var(--u-urgent) 18%, transparent);
+  color: var(--u-urgent);
+}
+.notif-ic.safety {
+  background: color-mix(in srgb, var(--u-soon) 18%, transparent);
+  color: var(--u-soon);
+}
+.notif-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.notif-title {
+  font-weight: 700;
+  font-size: 14px;
+}
+.notif-text {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.4;
+}
+.notif-time {
+  font-size: 11px;
+  color: var(--faint);
+  margin-top: 2px;
 }
 
 /* ---- Toast ---- */
@@ -2383,11 +2471,18 @@ button.input {
   gap: 4px;
   padding: 4px;
   border-radius: 14px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-edge);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  box-shadow: inset 0 1px 0 var(--glass-specular);
+  background: var(--control-bg);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+/* 4-language picker: 2×2 grid so اردو never clips (mobile + desktop). */
+.seg-lang {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.seg-lang button {
+  flex: none;
+  min-width: 0;
 }
 .seg button {
   flex: 1;

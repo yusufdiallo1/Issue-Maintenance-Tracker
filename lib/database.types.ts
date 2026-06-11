@@ -57,6 +57,7 @@ export type Database = {
           description_ar: string;
           source_language: string | null;
           description_translations: Record<string, string>;
+          tag_translations: Record<string, Record<string, string>>;
           id: number;
           photo_path: string | null;
           photo_paths: string[];
@@ -78,6 +79,7 @@ export type Database = {
           description_ar?: string;
           source_language?: string | null;
           description_translations?: Record<string, string>;
+          tag_translations?: Record<string, Record<string, string>>;
           id?: never;
           photo_path?: string | null;
           photo_paths?: string[];
@@ -99,6 +101,7 @@ export type Database = {
           description_ar?: string;
           source_language?: string | null;
           description_translations?: Record<string, string>;
+          tag_translations?: Record<string, Record<string, string>>;
           id?: never;
           photo_path?: string | null;
           photo_paths?: string[];
@@ -161,6 +164,39 @@ export type Database = {
         Row: { id: number; property: string; room: string; created_at: string };
         Insert: { id?: never; property: string; room: string; created_at?: string };
         Update: { id?: never; property?: string; room?: string; created_at?: string };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: number;
+          user_id: string;
+          kind: string;
+          issue_id: number | null;
+          title: string;
+          body: string;
+          read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: never;
+          user_id: string;
+          kind: string;
+          issue_id?: number | null;
+          title: string;
+          body: string;
+          read?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: never;
+          user_id?: string;
+          kind?: string;
+          issue_id?: number | null;
+          title?: string;
+          body?: string;
+          read?: boolean;
+          created_at?: string;
+        };
         Relationships: [];
       };
       push_subscriptions: {

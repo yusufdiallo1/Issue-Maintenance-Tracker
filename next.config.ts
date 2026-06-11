@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  // Hide the dev "compiling…" / route indicator overlay.
+  devIndicators: false,
 };
 
 export default nextConfig;

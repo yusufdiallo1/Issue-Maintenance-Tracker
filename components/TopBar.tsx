@@ -1,10 +1,8 @@
 "use client";
 
-import { Bell, BellRing, ChevronDown } from "lucide-react";
+import { Bell, ChevronDown } from "lucide-react";
 import { Logo } from "./Logo";
 import { useLang } from "@/app/providers";
-import { usePush } from "@/lib/usePush";
-import { useToast } from "./Toast";
 
 /** Mobile top bar: brand mark + name + role + notifications + avatar (menu). */
 export function TopBar({
@@ -12,29 +10,15 @@ export function TopBar({
   userInitial,
   unread = false,
   onProfile,
+  onNotifications,
 }: {
   role: string;
   userInitial: string;
   unread?: boolean;
   onProfile: () => void;
+  onNotifications: () => void;
 }) {
   const { t } = useLang();
-  const { subscribed, busy, subscribe, unsubscribe, state } = usePush();
-  const { show } = useToast();
-
-  const onBell = async () => {
-    if (state === "unsupported") {
-      show(t("pushUnsupported"), "info");
-      return;
-    }
-    if (subscribed) {
-      await unsubscribe();
-      show(t("pushOff"), "info");
-    } else {
-      await subscribe();
-      show(t("pushOn"), "success");
-    }
-  };
 
   return (
     <div className="topbar">
@@ -44,14 +28,8 @@ export function TopBar({
         <span className="r">{role}</span>
       </div>
       <div className="sp" />
-      <button
-        className="iconbtn bell"
-        aria-label={t("notifications")}
-        aria-pressed={subscribed}
-        disabled={busy}
-        onClick={onBell}
-      >
-        {subscribed ? <BellRing /> : <Bell />}
+      <button className="iconbtn bell" aria-label={t("notifications")} onClick={onNotifications}>
+        <Bell />
         {unread && <span className="notif-dot" aria-hidden />}
       </button>
       {/* Avatar reads as a menu trigger: ring + caret affordance. */}

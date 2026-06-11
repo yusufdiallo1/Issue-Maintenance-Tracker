@@ -103,7 +103,7 @@ export function AddEmployeeSheet({
         </div>
         <div className="field">
           <label>{t("speaksLang")}</label>
-          <div className="seg" style={{ width: "100%" }}>
+          <div className="seg seg-lang" style={{ width: "100%" }}>
             {LANGS.map((l) => (
               <button
                 key={l.id}

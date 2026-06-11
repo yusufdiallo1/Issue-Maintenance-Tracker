@@ -55,11 +55,15 @@ export function ReportsScreen({
   profiles,
   currentUserId,
   isAdmin,
+  openIssueId = null,
+  onConsumedOpenIssue,
 }: {
   initialIssues: Issue[];
   profiles: ProfileLite[];
   currentUserId: string;
   isAdmin: boolean;
+  openIssueId?: number | null;
+  onConsumedOpenIssue?: () => void;
 }) {
   const { t, lang } = useLang();
   const router = useRouter();
@@ -248,6 +252,18 @@ export function ReportsScreen({
     setDetailId(null);
     setSheetEnter(false);
   };
+
+  // Open a specific issue's detail when requested (e.g. from a notification).
+  useEffect(() => {
+    if (openIssueId == null) return;
+    const id = setTimeout(() => {
+      setSheetEnter(true);
+      setDetailId(openIssueId);
+      onConsumedOpenIssue?.();
+    }, 0);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openIssueId]);
 
   const cards = visible.map((issue) => (
     <IssueCard

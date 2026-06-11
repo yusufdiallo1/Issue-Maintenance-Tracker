@@ -191,6 +191,12 @@ export const T = {
     ur: "وہ جو زبان بولتے ہیں",
   },
   notifications: { en: "Notifications", ar: "الإشعارات", bn: "নোটিফিকেশন", ur: "اطلاعات" },
+  noNotifications: {
+    en: "No notifications yet.",
+    ar: "لا توجد إشعارات بعد.",
+    bn: "এখনও কোনো নোটিফিকেশন নেই।",
+    ur: "ابھی کوئی اطلاع نہیں۔",
+  },
   pushOn: {
     en: "Notifications on",
     ar: "تم تفعيل الإشعارات",

@@ -123,8 +123,15 @@ export function ago(iso: string, lang: Lang, now: number = Date.now()): string {
 export function tagDisplay(
   value: string,
   t: (key: import("@/lib/i18n/dictionary").Key) => string,
+  /** Optional per-issue custom-tag translations + the viewer's language. */
+  opts?: { tagTranslations?: Record<string, Record<string, string>>; lang?: Lang },
 ): string | null {
-  if (value.startsWith("custom:")) return value.slice(7);
+  if (value.startsWith("custom:")) {
+    const label = value.slice(7);
+    const tr = opts?.tagTranslations?.[label];
+    if (tr && opts?.lang && tr[opts.lang]) return tr[opts.lang];
+    return label;
+  }
   const meta = TAGS.find((x) => x.id === value);
   return meta ? t(meta.k) : value;
 }

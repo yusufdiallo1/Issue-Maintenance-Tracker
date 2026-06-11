@@ -5,11 +5,12 @@
 // around a scrollable main area. Holds nav state, profile-menu state,
 // and the entry-animation gate. Renders the active screen (role-aware).
 // ============================================================
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { BottomNav } from "./BottomNav";
 import { ProfileMenu } from "./ProfileMenu";
+import { NotificationsModal } from "./NotificationsModal";
 import { SyncPill } from "./SyncPill";
 import { ReportsScreen } from "./ReportsScreen";
 import { AddReportScreen } from "./AddReportScreen";
@@ -56,37 +57,41 @@ export function AppShell({
   const userInitial = (userName[0] || "?").toUpperCase();
   const isAdmin = role === "admin";
 
-  // ---- Unread indicator: new urgent / safety reports while away from Reports.
+  // ---- Notification inbox: unread badge driven by the notifications table.
   const [unread, setUnread] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [openIssueId, setOpenIssueId] = useState<number | null>(null);
   const [supabase] = useState(() => createClient());
-  const activeRef = useRef(active);
+
   useEffect(() => {
-    activeRef.current = active;
-  }, [active]);
-  useEffect(() => {
-    const onInsert = (payload: { new: Record<string, unknown> }) => {
-      const row = payload.new as { urgency?: string; tags?: string[]; reported_by?: string };
-      const flagged = row.urgency === "urgent" || (row.tags ?? []).includes("safety");
-      // Don't flag my own reports or when I'm already looking at Reports.
-      if (flagged && row.reported_by !== currentUserId && activeRef.current !== "reports") {
-        setUnread(true);
-      }
+    let cancelled = false;
+    const refreshUnread = async () => {
+      const { count } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("read", false);
+      if (!cancelled) setUnread((count ?? 0) > 0);
     };
+    refreshUnread();
     const channel = supabase
-      .channel(`unread-${Math.floor(performance.now())}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "issues" }, onInsert);
+      .channel(`notif-${Math.floor(performance.now())}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications" },
+        () => void refreshUnread(),
+      );
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.access_token) supabase.realtime.setAuth(session.access_token);
       channel.subscribe();
     });
     return () => {
+      cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [supabase, currentUserId]);
+  }, [supabase]);
 
   const navigate = (id: string) => {
     setActive(id);
-    if (id === "reports") setUnread(false);
     setMenuOpen(false);
   };
   const toggleProfile = () => setMenuOpen((v) => !v);
@@ -99,6 +104,8 @@ export function AppShell({
         profiles={profiles}
         currentUserId={currentUserId}
         isAdmin={isAdmin}
+        openIssueId={openIssueId}
+        onConsumedOpenIssue={() => setOpenIssueId(null)}
       />
     );
   } else if (active === "add") {
@@ -150,6 +157,7 @@ export function AppShell({
             userInitial={userInitial}
             unread={unread}
             onProfile={toggleProfile}
+            onNotifications={() => setNotifOpen(true)}
           />
           <div className={enter ? "scroll enter" : "scroll"} id="scroll">
             {screen}
@@ -172,6 +180,15 @@ export function AppShell({
         enter={menuEnter}
         onClose={() => setMenuOpen(false)}
         signOutAction={signOutAction}
+      />
+
+      <NotificationsModal
+        open={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        onOpenIssue={(id) => {
+          setOpenIssueId(id);
+          navigate("reports");
+        }}
       />
 
       <SyncPill />
