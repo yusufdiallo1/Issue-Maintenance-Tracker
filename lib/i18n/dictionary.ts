@@ -221,6 +221,42 @@ export const T = {
     bn: "এই ডিভাইসে নোটিফিকেশন সমর্থিত নয়।",
     ur: "اس آلے پر اطلاعات معاون نہیں ہیں۔",
   },
+  notifSound: {
+    en: "Notification sound",
+    ar: "صوت الإشعارات",
+    bn: "নোটিফিকেশন শব্দ",
+    ur: "اطلاع کی آواز",
+  },
+  primerTitle: {
+    en: "Get alerted to new issues",
+    ar: "احصل على تنبيهات البلاغات الجديدة",
+    bn: "নতুন ইস্যুর জন্য সতর্ক হন",
+    ur: "نئے مسائل کی اطلاع پائیں",
+  },
+  primerBody: {
+    en: "Turn on notifications to get a lock-screen alert the moment a new issue is reported.",
+    ar: "فعّل الإشعارات لتصلك تنبيهات على شاشة القفل فور الإبلاغ عن بلاغ جديد.",
+    bn: "নতুন ইস্যু রিপোর্ট হলেই লক-স্ক্রিন সতর্কতা পেতে নোটিফিকেশন চালু করুন।",
+    ur: "نیا مسئلہ رپورٹ ہوتے ہی لاک اسکرین الرٹ پانے کے لیے اطلاعات آن کریں۔",
+  },
+  primerEnable: {
+    en: "Enable notifications",
+    ar: "تفعيل الإشعارات",
+    bn: "নোটিফিকেশন চালু করুন",
+    ur: "اطلاعات فعال کریں",
+  },
+  primerInstall: {
+    en: "To get alerts on iPhone, add Aurion to your Home Screen first.",
+    ar: "لتلقي التنبيهات على iPhone، أضف أوريون إلى الشاشة الرئيسية أولاً.",
+    bn: "iPhone-এ সতর্কতা পেতে আগে অরিয়নকে হোম স্ক্রিনে যোগ করুন।",
+    ur: "آئی فون پر الرٹ پانے کے لیے پہلے اوریون کو ہوم اسکرین پر شامل کریں۔",
+  },
+  primerInstallStep: {
+    en: "Tap Share, then “Add to Home Screen”.",
+    ar: "اضغط مشاركة، ثم «إضافة إلى الشاشة الرئيسية».",
+    bn: "শেয়ার ট্যাপ করুন, তারপর “Add to Home Screen”।",
+    ur: "شیئر دبائیں، پھر ”Add to Home Screen“۔",
+  },
   saved: { en: "Saved", ar: "تم الحفظ", bn: "সংরক্ষিত", ur: "محفوظ ہو گیا" },
   queuedOffline: {
     en: "Saved — will sync when online",

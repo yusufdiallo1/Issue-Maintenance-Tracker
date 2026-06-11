@@ -29,6 +29,8 @@ export default async function Home() {
       team={team}
       audit={audit}
       roomsByProperty={roomsByProperty}
+      notifEnabled={profile.notif_enabled}
+      notifSound={profile.notif_sound}
     />
   );
 }

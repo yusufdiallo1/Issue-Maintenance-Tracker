@@ -90,36 +90,45 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
     room: input.room ?? "",
   });
 
-  // Notify admins of urgent or safety-tagged reports (fire-and-forget — never
-  // block the request on push delivery).
+  // Notify EVERY other user of the new issue — lock-screen push + bell inbox row.
+  // Fire-and-forget so push delivery never blocks the request.
   const isSafety = (input.tags ?? []).includes("safety");
-  if (input.urgency === "urgent" || isSafety) {
-    void (async () => {
-      try {
-        const { sendPushToUsers, adminUserIds } = await import("@/lib/push");
-        const admins = (await adminUserIds()).filter((id) => id !== me.id);
-        const where = `${propLabelEn(input.property)}${input.room ? " " + input.room : ""}`;
-        const title = isSafety ? "⚠️ Safety report" : "🔴 Urgent report";
-        const body = `${where}: ${input.description || "New issue"}`.slice(0, 140);
-        // Persist a notification-feed row per admin (the bell inbox).
-        const admin = createAdminClient();
-        if (admins.length) {
-          await admin.from("notifications").insert(
-            admins.map((uid) => ({
-              user_id: uid,
-              kind: isSafety ? "safety" : "urgent",
-              issue_id: data.id,
-              title,
-              body,
-            })),
-          );
-        }
-        await sendPushToUsers(admins, { title, body, url: "/", tag: `issue-${data.id}` });
-      } catch {
-        /* ignore */
+  const isUrgent = input.urgency === "urgent" || isSafety;
+  void (async () => {
+    try {
+      const { sendPushToAllExcept } = await import("@/lib/push");
+      const admin = createAdminClient();
+      const where = `${propLabelEn(input.property)}${input.room ? " " + input.room : ""}`;
+      const title = `${isSafety ? "⚠️ " : isUrgent ? "🔴 " : ""}New issue · ${where}`;
+      const body = `${input.type} · ${input.urgency} — ${input.description || ""}`
+        .trim()
+        .slice(0, 140);
+
+      // Bell inbox rows for everyone except the reporter (matches push reach).
+      const { data: recipients } = await admin.from("profiles").select("id").neq("id", me.id);
+      const ids = (recipients ?? []).map((p) => p.id);
+      if (ids.length) {
+        await admin.from("notifications").insert(
+          ids.map((uid) => ({
+            user_id: uid,
+            kind: isSafety ? "safety" : isUrgent ? "urgent" : "new",
+            issue_id: data.id,
+            title,
+            body,
+          })),
+        );
       }
-    })();
-  }
+      await sendPushToAllExcept(me.id, {
+        title,
+        body,
+        url: `/?issue=${data.id}`,
+        tag: `issue-${data.id}`,
+        urgent: isUrgent,
+      });
+    } catch {
+      /* ignore */
+    }
+  })();
 
   revalidatePath("/");
   return { ok: true, id: data.id };

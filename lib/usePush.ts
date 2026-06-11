@@ -54,10 +54,17 @@ export function usePush() {
         applicationServerKey: urlBase64ToUint8Array(key),
       });
       const json = sub.toJSON();
+      const ua = navigator.userAgent;
+      const platform = /iPhone|iPad|iPod/i.test(ua)
+        ? "ios"
+        : /Android/i.test(ua)
+          ? "android"
+          : "web";
       await savePushSubscription({
         endpoint: sub.endpoint,
         p256dh: json.keys?.p256dh ?? "",
         auth: json.keys?.auth ?? "",
+        platform,
       });
       setSubscribed(true);
     } catch {

@@ -12,6 +12,7 @@ import { BottomNav } from "./BottomNav";
 import { ProfileMenu } from "./ProfileMenu";
 import { NotificationsModal } from "./NotificationsModal";
 import { SyncPill } from "./SyncPill";
+import { PushPrimer } from "./PushPrimer";
 import { ReportsScreen } from "./ReportsScreen";
 import { AddReportScreen } from "./AddReportScreen";
 import { MyReportsScreen } from "./MyReportsScreen";
@@ -22,6 +23,7 @@ import { navItemsFor, type Role } from "./nav-items";
 import { useLang } from "@/app/providers";
 import { useViewEnter } from "@/lib/useViewEnter";
 import { createClient } from "@/lib/supabase/client";
+import { pingNewIssue } from "@/lib/ping";
 import { signOutAction } from "@/app/login/actions";
 import type { Issue } from "@/lib/issues";
 import type { ProfileLite, ProfileFull, AuditRow } from "@/lib/data";
@@ -35,6 +37,8 @@ export function AppShell({
   team,
   audit,
   roomsByProperty,
+  notifEnabled = true,
+  notifSound = true,
 }: {
   userName: string;
   role: Role;
@@ -44,6 +48,8 @@ export function AppShell({
   team: ProfileFull[];
   audit: AuditRow[];
   roomsByProperty: Record<string, string[]>;
+  notifEnabled?: boolean;
+  notifSound?: boolean;
 }) {
   const { t } = useLang();
   const items = navItemsFor(role);
@@ -77,7 +83,20 @@ export function AppShell({
       .channel(`notif-${Math.floor(performance.now())}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "notifications" },
+        { event: "INSERT", schema: "public", table: "notifications" },
+        (payload) => {
+          void refreshUnread();
+          // In-app ping when the app is open (where system push banners don't
+          // fire). Honors the user's sound pref + reduced-motion (in pingNewIssue).
+          if (notifSound && document.visibilityState === "visible") {
+            const row = payload.new as { kind?: string };
+            void pingNewIssue(row.kind === "urgent" || row.kind === "safety");
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "notifications" },
         () => void refreshUnread(),
       );
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -88,7 +107,22 @@ export function AppShell({
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [supabase]);
+  }, [supabase, notifSound]);
+
+  // Deep-link: /?issue=<id> (from a push tap) opens that issue in Reports.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = setTimeout(() => {
+      const q = new URLSearchParams(window.location.search).get("issue");
+      const n = q ? Number(q) : NaN;
+      if (Number.isFinite(n)) {
+        setActive("reports");
+        setOpenIssueId(n);
+        window.history.replaceState(null, "", "/");
+      }
+    }, 0);
+    return () => clearTimeout(id);
+  }, []);
 
   const navigate = (id: string) => {
     setActive(id);
@@ -135,7 +169,14 @@ export function AppShell({
       />
     );
   } else {
-    screen = <SettingsScreen userName={userName} role={role} />;
+    screen = (
+      <SettingsScreen
+        userName={userName}
+        role={role}
+        notifEnabled={notifEnabled}
+        notifSound={notifSound}
+      />
+    );
   }
 
   return (
@@ -192,6 +233,7 @@ export function AppShell({
       />
 
       <SyncPill />
+      <PushPrimer />
     </div>
   );
 }

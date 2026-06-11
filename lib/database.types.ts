@@ -141,6 +141,8 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"];
           username: string;
           preferred_language: string;
+          notif_enabled: boolean;
+          notif_sound: boolean;
         };
         Insert: {
           created_at?: string;
@@ -149,6 +151,8 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"];
           username: string;
           preferred_language?: string;
+          notif_enabled?: boolean;
+          notif_sound?: boolean;
         };
         Update: {
           created_at?: string;
@@ -157,6 +161,8 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"];
           username?: string;
           preferred_language?: string;
+          notif_enabled?: boolean;
+          notif_sound?: boolean;
         };
         Relationships: [];
       };
@@ -206,6 +212,7 @@ export type Database = {
           endpoint: string;
           p256dh: string;
           auth: string;
+          platform: string;
           created_at: string;
         };
         Insert: {
@@ -214,6 +221,7 @@ export type Database = {
           endpoint: string;
           p256dh: string;
           auth: string;
+          platform?: string;
           created_at?: string;
         };
         Update: {
@@ -222,6 +230,7 @@ export type Database = {
           endpoint?: string;
           p256dh?: string;
           auth?: string;
+          platform?: string;
           created_at?: string;
         };
         Relationships: [];
