@@ -31,6 +31,7 @@ import type { ProfileLite, ProfileFull, AuditRow } from "@/lib/data";
 
 export function AppShell({
   userName,
+  username,
   role,
   currentUserId,
   issues,
@@ -42,6 +43,7 @@ export function AppShell({
   notifSound = true,
 }: {
   userName: string;
+  username: string;
   role: Role;
   currentUserId: string;
   issues: Issue[];
@@ -174,6 +176,7 @@ export function AppShell({
     screen = (
       <SettingsScreen
         userName={userName}
+        username={username}
         role={role}
         notifEnabled={notifEnabled}
         notifSound={notifSound}
@@ -190,9 +193,11 @@ export function AppShell({
           role={roleLabel}
           userName={userName}
           userInitial={userInitial}
+          unread={unread}
           onNavigate={navigate}
           onAdd={() => navigate("add")}
           onProfile={toggleProfile}
+          onNotifications={() => setNotifOpen(true)}
         />
         <div className="main">
           <TopBar

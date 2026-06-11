@@ -40,7 +40,7 @@ export function IssueCard({
       >
         {thumbUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={thumbUrl} alt="" className="thumb-img" />
+          <img src={thumbUrl} alt="" className="thumb-img" loading="lazy" decoding="async" />
         ) : (
           <CategoryIcon type={issue.type} />
         )}

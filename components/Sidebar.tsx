@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Bell } from "lucide-react";
 import { Logo } from "./Logo";
 import type { NavItem } from "./nav-items";
 import { useLang } from "@/app/providers";
@@ -13,18 +13,22 @@ export function Sidebar({
   role,
   userName,
   userInitial,
+  unread = false,
   onNavigate,
   onAdd,
   onProfile,
+  onNotifications,
 }: {
   items: NavItem[];
   active: string;
   role: string;
   userName: string;
   userInitial: string;
+  unread?: boolean;
   onNavigate: (id: string) => void;
   onAdd: () => void;
   onProfile: () => void;
+  onNotifications?: () => void;
 }) {
   const { t, dir } = useLang();
 
@@ -90,13 +94,26 @@ export function Sidebar({
 
       <div style={{ flex: 1 }} />
 
-      <button className="sprofile" onClick={onProfile}>
-        <span className="avatar">{userInitial}</span>
-        <span className="spi">
-          <span className="spn">{userName}</span>
-          <span className="spr">{role}</span>
-        </span>
-      </button>
+      <div className="sfoot">
+        <button className="sprofile" onClick={onProfile}>
+          <span className="avatar">{userInitial}</span>
+          <span className="spi">
+            <span className="spn">{userName}</span>
+            <span className="spr">{role}</span>
+          </span>
+        </button>
+        {onNotifications && (
+          <button
+            className="sbell"
+            onClick={onNotifications}
+            aria-label={t("notifications")}
+            title={t("notifications")}
+          >
+            <Bell />
+            {unread && <span className="notif-dot" aria-hidden />}
+          </button>
+        )}
+      </div>
     </aside>
   );
 }

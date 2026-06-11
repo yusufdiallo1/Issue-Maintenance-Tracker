@@ -289,6 +289,12 @@ export const T = {
     ur: "یا خود بھریں",
   },
   addPhoto: { en: "Add a photo", ar: "أضف صورة", bn: "ছবি যোগ করুন", ur: "تصویر شامل کریں" },
+  addingPhotos: {
+    en: "Adding photos…",
+    ar: "جارٍ إضافة الصور…",
+    bn: "ছবি যোগ করা হচ্ছে…",
+    ur: "تصاویر شامل ہو رہی ہیں…",
+  },
   photoAdded: {
     en: "Photo added",
     ar: "تمت إضافة صورة",

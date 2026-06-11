@@ -72,7 +72,9 @@ export function IssueDetailSheet({
       list.map((p) =>
         supabase.storage
           .from("issue-photos")
-          .createSignedUrl(p, 3600)
+          // Gallery cells render small — fetch a 480² transform, not the full
+          // original. The lightbox fetches full-res on demand (see openLightbox).
+          .createSignedUrl(p, 3600, { transform: { width: 480, height: 480, resize: "cover" } })
           .then(({ data }) => data?.signedUrl ?? null),
       ),
     ).then((urls) => {
@@ -234,7 +236,7 @@ export function IssueDetailSheet({
                   aria-label="View photo"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" />
+                  <img src={url} alt="" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>

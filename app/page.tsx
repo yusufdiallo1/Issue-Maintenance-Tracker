@@ -22,6 +22,7 @@ export default async function Home() {
   return (
     <AppShell
       userName={profile.full_name}
+      username={profile.username}
       role={profile.role}
       currentUserId={profile.id}
       issues={issues}

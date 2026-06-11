@@ -2,30 +2,40 @@
 
 import { useState } from "react";
 import { LogOut, Bell, Volume2 } from "lucide-react";
-import { useLang } from "@/app/providers";
+import { useLang, useTheme } from "@/app/providers";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { usePush } from "@/lib/usePush";
 import { useToast } from "./Toast";
 import { setNotifPrefs } from "@/app/actions/push";
 import { signOutAction } from "@/app/login/actions";
+import { LANGS } from "@/lib/i18n/dictionary";
+import type { Theme } from "@/lib/prefs";
 
 /**
- * Settings: account + notifications + sign out. Language/Appearance live in the
- * profile menu; Team/Audit/Analytics live in the admin Manage area.
+ * Settings: account + language + appearance + notifications + sign out.
+ * Team/Audit/Analytics live in the admin Manage area.
  */
 export function SettingsScreen({
   userName,
+  username,
   role,
   notifEnabled = true,
   notifSound = true,
 }: {
   userName: string;
+  username: string;
   role: "admin" | "staff";
   notifEnabled?: boolean;
   notifSound?: boolean;
 }) {
-  const { t } = useLang();
+  const { t, lang, setLang } = useLang();
+  const { theme, setTheme } = useTheme();
   const { subscribe, unsubscribe, subscribed, state, busy } = usePush();
+  const themes: { id: Theme; label: string }[] = [
+    { id: "auto", label: t("system") },
+    { id: "light", label: t("light") },
+    { id: "dark", label: t("dark") },
+  ];
   const { show } = useToast();
   const [confirmOut, setConfirmOut] = useState(false);
   const [pushOn, setPushOn] = useState(notifEnabled);
@@ -64,9 +74,39 @@ export function SettingsScreen({
           <span className="eav">{(userName[0] || "?").toUpperCase()}</span>
           <div className="ei">
             <div className="en">{userName}</div>
-            <div className="eu">{role === "admin" ? t("admin") : t("staff")}</div>
+            <div className="eu">
+              @{username} · {role === "admin" ? t("admin") : t("staff")}
+            </div>
           </div>
         </div>
+      </div>
+
+      <div className="section-h">{t("language")}</div>
+      <div className="seg seg-lang set-seg">
+        {LANGS.map((l) => (
+          <button
+            key={l.id}
+            className={lang === l.id ? "on" : ""}
+            onClick={() => setLang(l.id)}
+            type="button"
+          >
+            {l.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="section-h">{t("appearance")}</div>
+      <div className="seg set-seg">
+        {themes.map((th) => (
+          <button
+            key={th.id}
+            className={theme === th.id ? "on" : ""}
+            onClick={() => setTheme(th.id)}
+            type="button"
+          >
+            {th.label}
+          </button>
+        ))}
       </div>
 
       <div className="section-h">{t("notifications")}</div>

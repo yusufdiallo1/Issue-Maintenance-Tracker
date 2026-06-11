@@ -117,7 +117,11 @@ export function ReportsScreen({
       withPhoto.map((i) =>
         supabase.storage
           .from("issue-photos")
-          .createSignedUrl(i.photo_paths[0], 3600)
+          // Transformed thumbnail (96² cover) — not the full-res original — so
+          // the list never pulls multi-MB images into tiny tiles.
+          .createSignedUrl(i.photo_paths[0], 3600, {
+            transform: { width: 96, height: 96, resize: "cover" },
+          })
           .then(({ data }) => [i.id, data?.signedUrl ?? ""] as const),
       ),
     ).then((pairs) => {

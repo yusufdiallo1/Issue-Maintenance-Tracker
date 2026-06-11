@@ -359,7 +359,7 @@ export function AddReportScreen({
           {photos.map((p) => (
             <div key={p.id} className={p.uploading ? "photo-cell uploading" : "photo-cell"}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {p.url && <img src={p.url} alt="" />}
+              {p.url && <img src={p.url} alt="" loading="lazy" decoding="async" />}
               {p.uploading && <span className="spin" />}
               {!p.uploading && (
                 <button className="x" onClick={() => removePhoto(p.id)} aria-label="Remove">
@@ -375,6 +375,12 @@ export function AddReportScreen({
             </button>
           )}
         </div>
+        {photos.some((p) => p.uploading) && (
+          <p className="adding-photos">
+            <span className="spin" />
+            {t("addingPhotos")}
+          </p>
+        )}
         <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={onPickPhotos} />
       </div>
 
