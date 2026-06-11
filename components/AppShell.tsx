@@ -24,6 +24,7 @@ import { useLang } from "@/app/providers";
 import { useViewEnter } from "@/lib/useViewEnter";
 import { createClient } from "@/lib/supabase/client";
 import { pingNewIssue } from "@/lib/ping";
+import { useLowPowerClass } from "@/lib/perf";
 import { signOutAction } from "@/app/login/actions";
 import type { Issue } from "@/lib/issues";
 import type { ProfileLite, ProfileFull, AuditRow } from "@/lib/data";
@@ -52,6 +53,7 @@ export function AppShell({
   notifSound?: boolean;
 }) {
   const { t } = useLang();
+  useLowPowerClass();
   const items = navItemsFor(role);
   const [active, setActive] = useState(items[0].id);
   const [menuOpen, setMenuOpen] = useState(false);

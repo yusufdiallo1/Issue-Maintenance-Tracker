@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import type { NavItem } from "./nav-items";
 import { useLang } from "@/app/providers";
+import { tap } from "@/lib/haptics";
 
 /**
  * Floating frosted bottom pill nav (mobile). One continuous glass pill with a
@@ -86,7 +87,10 @@ export function BottomNav({
                 btnRefs.current[i] = el;
               }}
               className="tab addtab"
-              onClick={onAdd}
+              onClick={() => {
+                tap();
+                onAdd();
+              }}
               aria-label={t("newReport")}
             >
               <span className="plusbtn">
@@ -106,7 +110,10 @@ export function BottomNav({
               btnRefs.current[i] = el;
             }}
             className={on ? "tab on" : "tab"}
-            onClick={() => onNavigate(item.id)}
+            onClick={() => {
+              tap();
+              onNavigate(item.id);
+            }}
             aria-current={on ? "page" : undefined}
           >
             <span className="tab-ico">

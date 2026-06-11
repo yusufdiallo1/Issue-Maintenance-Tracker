@@ -87,6 +87,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     >
       <head>
         <meta name="theme-color" content="#0a0a0a" />
+        {/* Legacy iOS standalone flag (Next emits only mobile-web-app-capable). */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         {/* iOS Home-Screen launch images for a native full-screen splash. */}
         {SPLASH.map(({ w, h, dpr }) => (
           <link
