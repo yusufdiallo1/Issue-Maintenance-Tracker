@@ -13,6 +13,7 @@ import {
   thumbColor,
   urgencyColor,
   urgencyLabelKey,
+  localizedDescription,
   type Issue,
 } from "@/lib/issues";
 
@@ -51,9 +52,7 @@ export function IssueCard({
           {issue.room && <span className="prop">{pm ? pm[lang] : ""}</span>}
           <span className="time mono">{ago(issue.created_at, lang)}</span>
         </div>
-        <div className="desc">
-          {(lang === "ar" ? issue.description_ar : issue.description) || issue.description}
-        </div>
+        <div className="desc">{localizedDescription(issue, lang).text}</div>
         <div className="l3">
           <span
             className="ubadge"

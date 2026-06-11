@@ -19,9 +19,11 @@ import {
   typeLabelKey,
   urgencyColor,
   urgencyLabelKey,
+  localizedDescription,
   type Deadline,
   type Issue,
 } from "@/lib/issues";
+import { LANGS } from "@/lib/i18n/dictionary";
 import { takeIssue, markDone, reopenIssue, setDeadline, clearDeadline } from "@/app/actions/issues";
 
 const DEADLINE_OPTS: { id: Deadline; key: "ddToday" | "ddTomorrow" | "ddDays3" | "ddWeek" }[] = [
@@ -58,6 +60,7 @@ export function IssueDetailSheet({
   const [supabase] = useState(() => createClient());
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [showOriginal, setShowOriginal] = useState(false);
 
   // Resolve signed URLs for the issue's stored photo paths.
   const pathsKey = (issue?.photo_paths ?? []).join(",");
@@ -84,7 +87,8 @@ export function IssueDetailSheet({
   const pm = propMeta(issue.property);
   const overdue = isOverdue(issue);
   const mine = issue.taken_by === currentUserId;
-  const desc = (lang === "ar" ? issue.description_ar : issue.description) || issue.description;
+  const loc = localizedDescription(issue, lang);
+  const desc = showOriginal ? loc.original : loc.text;
 
   // Run a lifecycle mutation: toast on success, queue to the outbox on
   // offline/failure (so it syncs when back online — realtime then broadcasts
@@ -225,7 +229,20 @@ export function IssueDetailSheet({
           </div>
         )}
 
-        <p style={{ fontSize: 16, lineHeight: 1.55, marginBottom: 12 }}>{desc}</p>
+        <p style={{ fontSize: 16, lineHeight: 1.55, marginBottom: loc.translated ? 4 : 12 }}>
+          {desc}
+        </p>
+        {loc.translated && (
+          <button
+            className="translated-note"
+            onClick={() => setShowOriginal((v) => !v)}
+            type="button"
+          >
+            {showOriginal
+              ? t("showTranslation")
+              : `${t("translatedFrom")} ${LANGS.find((l) => l.id === loc.source)?.label ?? loc.source}`}
+          </button>
+        )}
 
         {(issue.deadline || (issue.tags ?? []).length > 0) && (
           <div className="l3" style={{ marginBottom: 14 }}>

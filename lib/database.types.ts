@@ -55,6 +55,8 @@ export type Database = {
           deadline: Database["public"]["Enums"]["issue_deadline"] | null;
           description: string;
           description_ar: string;
+          source_language: string | null;
+          description_translations: Record<string, string>;
           id: number;
           photo_path: string | null;
           photo_paths: string[];
@@ -74,6 +76,8 @@ export type Database = {
           deadline?: Database["public"]["Enums"]["issue_deadline"] | null;
           description?: string;
           description_ar?: string;
+          source_language?: string | null;
+          description_translations?: Record<string, string>;
           id?: never;
           photo_path?: string | null;
           photo_paths?: string[];
@@ -93,6 +97,8 @@ export type Database = {
           deadline?: Database["public"]["Enums"]["issue_deadline"] | null;
           description?: string;
           description_ar?: string;
+          source_language?: string | null;
+          description_translations?: Record<string, string>;
           id?: never;
           photo_path?: string | null;
           photo_paths?: string[];

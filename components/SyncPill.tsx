@@ -49,7 +49,7 @@ async function flushCreate(op: OutboxOp, supabase: any) {
     descriptionAr: "",
     tags: (p.tags as string[]) ?? [],
     photoPaths,
-    lang: (p.lang as "en" | "ar") ?? "ar",
+    lang: (p.lang as "en" | "ar" | "bn" | "ur") ?? "ar",
   });
   if (!res.ok) throw new Error("create_failed");
 }

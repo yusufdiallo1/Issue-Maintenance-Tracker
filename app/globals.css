@@ -191,6 +191,25 @@ body {
     sans-serif;
   letter-spacing: 0;
 }
+/* Script-specific UI fonts (Bengali, Urdu Naskh) — Latin/Arabic keep the
+   system + Geist stack. Western digits are preserved everywhere. */
+html[lang="bn"] body,
+html[lang="bn"] {
+  font-family: var(--font-bn), var(--font-sans), system-ui, sans-serif;
+  letter-spacing: 0;
+}
+html[lang="ur"] body,
+html[lang="ur"] {
+  font-family:
+    var(--font-ur),
+    -apple-system,
+    "SF Arabic",
+    system-ui,
+    sans-serif;
+  letter-spacing: 0;
+  line-height: 1.7; /* Naskh needs more vertical room */
+}
+
 /* Monospace for precision details: report IDs, room numbers, timestamps, audit,
    and the big analytics numbers. The Resend "craft" signal. */
 .mono,
@@ -1618,6 +1637,15 @@ button.input {
 .takenline.you {
   color: var(--accent);
   font-weight: 700;
+}
+.translated-note {
+  display: block;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  margin: 0 2px 14px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* ---- Toast ---- */

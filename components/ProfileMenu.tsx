@@ -4,7 +4,7 @@ import { useState } from "react";
 import { User, LogOut } from "lucide-react";
 import { useLang, useTheme } from "@/app/providers";
 import { ConfirmDialog } from "./ConfirmDialog";
-import type { Lang } from "@/lib/i18n/dictionary";
+import { LANGS } from "@/lib/i18n/dictionary";
 import type { Theme } from "@/lib/prefs";
 
 /**
@@ -31,10 +31,7 @@ export function ProfileMenu({
   const [confirmOut, setConfirmOut] = useState(false);
   if (!open) return null;
 
-  const langs: { id: Lang; label: string }[] = [
-    { id: "ar", label: "العربية" },
-    { id: "en", label: "English" },
-  ];
+  const langs = LANGS;
   const themes: { id: Theme; label: string }[] = [
     { id: "auto", label: t("system") },
     { id: "light", label: t("light") },

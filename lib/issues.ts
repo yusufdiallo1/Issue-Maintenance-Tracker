@@ -129,6 +129,28 @@ export function tagDisplay(
   return meta ? t(meta.k) : value;
 }
 
+/**
+ * The issue description in the viewer's language: prefers the cached
+ * translation, falls back to the original. Returns whether it's translated and
+ * the original source language (for a "Translated from X" toggle).
+ */
+export function localizedDescription(
+  issue: Issue,
+  lang: Lang,
+): { text: string; original: string; translated: boolean; source: Lang } {
+  const source = (issue.source_language as Lang) ?? "ar";
+  const original =
+    (issue.description_translations as Record<string, string>)?.[source] ||
+    issue.description ||
+    issue.description_ar ||
+    "";
+  const translations = (issue.description_translations as Record<string, string>) ?? {};
+  // Legacy rows have no translations map → fall back to description/_ar.
+  const fallback = lang === "ar" ? issue.description_ar || issue.description : issue.description;
+  const text = translations[lang] || fallback || original;
+  return { text, original, translated: source !== lang && !!translations[lang], source };
+}
+
 /** Format a duration in minutes like the prototype: "3h 5m" / "2h" / "45m". */
 export function fmtDur(m: number, lang: Lang): string {
   if (m < 60) return m + (lang === "ar" ? " د" : "m");

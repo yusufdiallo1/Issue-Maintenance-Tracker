@@ -16,9 +16,12 @@ export const DEFAULT_THEME: Theme = "auto"; // follow system by default
 // 1 year, in seconds.
 export const PREF_MAX_AGE = 60 * 60 * 24 * 365;
 
-export const dirFor = (lang: Lang): "rtl" | "ltr" => (lang === "ar" ? "rtl" : "ltr");
+// Arabic AND Urdu are RTL; English + Bengali are LTR.
+export const dirFor = (lang: Lang): "rtl" | "ltr" =>
+  lang === "ar" || lang === "ur" ? "rtl" : "ltr";
 
-export const isLang = (v: unknown): v is Lang => v === "ar" || v === "en";
+export const isLang = (v: unknown): v is Lang =>
+  v === "ar" || v === "en" || v === "bn" || v === "ur";
 export const isTheme = (v: unknown): v is Theme => v === "auto" || v === "light" || v === "dark";
 
 /** Parse raw cookie values into validated prefs, falling back to defaults. */

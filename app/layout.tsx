@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Sans_Bengali, Noto_Naskh_Arabic } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { LiquidGlassFilter } from "@/components/LiquidGlassFilter";
@@ -11,6 +11,13 @@ import { dirFor, LANG_COOKIE, normalizePrefs, THEME_COOKIE } from "@/lib/prefs";
 // / audit. Exposed as CSS vars; Arabic falls back to the system Arabic stack.
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
+// Bengali + Urdu (Naskh) scripts — applied via [lang] in CSS.
+const notoBengali = Noto_Sans_Bengali({
+  subsets: ["bengali"],
+  variable: "--font-bn",
+  display: "swap",
+});
+const notoUrdu = Noto_Naskh_Arabic({ subsets: ["arabic"], variable: "--font-ur", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Aurion Maintenance",
@@ -56,7 +63,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       lang={lang}
       dir={dirFor(lang)}
       data-theme="dark"
-      className={`${geist.variable} ${geistMono.variable}`}
+      className={`${geist.variable} ${geistMono.variable} ${notoBengali.variable} ${notoUrdu.variable}`}
     >
       <head>
         <meta name="theme-color" content="#0a0a0a" />

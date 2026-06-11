@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentProfile } from "@/lib/session";
 import type { Deadline } from "@/lib/issues";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 export type ActionResult = { ok: boolean; error?: string };
 
@@ -23,34 +24,9 @@ export type CreateReportInput = {
   descriptionAr: string;
   tags: string[];
   photoPaths: string[];
-  lang: "en" | "ar";
+  lang: Lang;
 };
 export type CreateReportResult = { ok: true; id: number } | { ok: false; error: string };
-
-/**
- * Translate a short text to the target language via Groq. Returns "" on any
- * failure so translation is never blocking.
- */
-async function translateText(text: string, to: "en" | "ar"): Promise<string> {
-  if (!text.trim()) return "";
-  try {
-    const { groq } = await import("@/lib/groq/server");
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
-      temperature: 0,
-      messages: [
-        {
-          role: "system",
-          content: `Translate the user's maintenance note to ${to === "ar" ? "Arabic" : "English"}. Output ONLY the translation, no quotes or notes.`,
-        },
-        { role: "user", content: text },
-      ],
-    });
-    return completion.choices[0]?.message?.content?.trim() ?? "";
-  } catch {
-    return "";
-  }
-}
 
 /** Create a new issue (reported_by = me, created_at = now) + 'report' audit. */
 export async function createReport(input: CreateReportInput): Promise<CreateReportResult> {
@@ -60,14 +36,14 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
     return { ok: false, error: "missing_fields" };
   }
 
-  // Store the description in BOTH languages so cards read correctly either way.
+  // Auto-translate the free text into all 4 languages (cached on the row).
+  // The original stays in `description`; `source_language` records its language.
   const base = input.description || "";
-  let en = input.lang === "en" ? base : "";
-  let ar = input.lang === "ar" ? base : "";
-  if (base) {
-    if (!en) en = (await translateText(base, "en")) || base;
-    if (!ar) ar = (await translateText(base, "ar")) || base;
-  }
+  const { translateAll, detectLang } = await import("@/lib/translate");
+  const source = base ? detectLang(base) : input.lang;
+  const translations = base ? await translateAll(base, source) : {};
+  // description_ar kept for the legacy card reader; description holds the original.
+  const ar = translations.ar ?? base;
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -78,8 +54,10 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
       type: input.type,
       urgency: input.urgency,
       status: "open",
-      description: en,
+      description: base,
       description_ar: ar,
+      source_language: source,
+      description_translations: translations,
       tags: input.tags ?? [],
       photo_paths: input.photoPaths ?? [],
       photo_path: input.photoPaths?.[0] ?? null,

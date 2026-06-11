@@ -8,14 +8,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Sparkles, AlertTriangle, Download } from "lucide-react";
 import { useLang } from "@/app/providers";
-import { propMeta, TYPES } from "@/lib/i18n/dictionary";
+import { propMeta, TYPES, type Lang } from "@/lib/i18n/dictionary";
 import { fmtDur, type Issue } from "@/lib/issues";
 import { computeAnalytics } from "@/lib/analytics";
 import { getAiSummary } from "@/app/actions/summary";
 import type { ProfileLite } from "@/lib/data";
 
 const typeKey = (id: string) => TYPES.find((x) => x.id === id)?.k ?? "tOther";
-const dash = (m: number | null, lang: "en" | "ar") => (m == null ? "—" : fmtDur(m, lang));
+const dash = (m: number | null, lang: Lang) => (m == null ? "—" : fmtDur(m, lang));
 
 export function AnalyticsPanel({ issues, profiles }: { issues: Issue[]; profiles: ProfileLite[] }) {
   const { t, lang } = useLang();

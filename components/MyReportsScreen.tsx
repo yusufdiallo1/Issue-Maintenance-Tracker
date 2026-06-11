@@ -7,7 +7,7 @@ import { IssueDetailSheet } from "./IssueDetailSheet";
 import { useLang } from "@/app/providers";
 import { createClient } from "@/lib/supabase/client";
 import { propMeta } from "@/lib/i18n/dictionary";
-import { statusColor, statusLabelKey, type Issue } from "@/lib/issues";
+import { statusColor, statusLabelKey, localizedDescription, type Issue } from "@/lib/issues";
 import type { ProfileLite } from "@/lib/data";
 import { markDone, reopenIssue } from "@/app/actions/issues";
 
@@ -119,7 +119,7 @@ export function MyReportsScreen({
         <div className="checklist glass">
           {list.map((i) => {
             const pm = propMeta(i.property);
-            const desc = (lang === "ar" ? i.description_ar : i.description) || i.description;
+            const desc = localizedDescription(i, lang).text;
             if (mode === "took") {
               const done = i.status === "done";
               return (

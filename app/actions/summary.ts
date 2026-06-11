@@ -10,7 +10,7 @@ import { TYPES, type Lang } from "@/lib/i18n/dictionary";
 import { isOverdue, minutesAgo, type Issue } from "@/lib/issues";
 
 type CacheEntry = { text: string; at: number };
-const cache: Record<Lang, CacheEntry | undefined> = { en: undefined, ar: undefined };
+const cache: Partial<Record<Lang, CacheEntry>> = {};
 const TTL = 60_000; // 1 minute
 
 const typeLabelEn = (id: string) => {
@@ -74,7 +74,7 @@ export async function getAiSummary(lang: Lang): Promise<{ text: string }> {
       messages: [
         {
           role: "system",
-          content: `You are a hotel maintenance supervisor assistant. Write ONE short paragraph (2-3 sentences) summarizing the open workload in ${lang === "ar" ? "Arabic" : "English"}. Be specific and actionable. Use Western numerals. Output only the paragraph.`,
+          content: `You are a hotel maintenance supervisor assistant. Write ONE short paragraph (2-3 sentences) summarizing the open workload in ${{ ar: "Arabic", en: "English", bn: "Bengali", ur: "Urdu" }[lang]}. Be specific and actionable. Use Western numerals. Output only the paragraph.`,
         },
         { role: "user", content: `Stats: ${facts}` },
       ],
