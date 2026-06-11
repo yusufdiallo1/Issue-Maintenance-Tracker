@@ -683,13 +683,53 @@ html[data-theme="dark"] {
   place-items: center;
   background: var(--accent-soft);
   color: var(--accent);
-  border: 1px solid var(--border);
   font-size: 15px;
   font-weight: 700;
   transition: transform 0.15s;
 }
 .avatar:active {
   transform: scale(0.9);
+}
+/* Avatar reads as a menu trigger: gold ring + a small caret chip. */
+.avatar-trigger {
+  position: relative;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.avatar-trigger .avatar-caret {
+  position: absolute;
+  bottom: -3px;
+  inset-inline-end: -3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--card2);
+  color: var(--dim);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.avatar-trigger .avatar-caret svg {
+  width: 11px;
+  height: 11px;
+}
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .avatar-trigger:hover {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+}
+/* Notification bell + unread dot. */
+.bell {
+  position: relative;
+}
+.notif-dot {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--u-urgent);
+  box-shadow: 0 0 0 2px var(--canvas);
 }
 .avatar svg {
   width: 19px;
@@ -1000,18 +1040,30 @@ p.sub {
   width: 100%;
   padding: 14px 16px;
   border-radius: 13px;
-  background: var(--card);
-  border: 1px solid var(--hair);
+  background: var(--control-bg);
+  color: var(--text);
+  border: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   font-size: 16px;
-  transition:
-    border 0.18s,
-    box-shadow 0.18s;
+  transition: box-shadow 0.18s;
   letter-spacing: -0.01em;
 }
 .input::placeholder,
 .ta::placeholder,
 .inset-input::placeholder {
   color: var(--faint);
+}
+/* Kill the browser autofill white/yellow wash that made fields look inverted. */
+.input:-webkit-autofill,
+.inset-input:-webkit-autofill,
+.input:-webkit-autofill:focus,
+.inset-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1000px var(--control-bg);
+  caret-color: var(--text);
+  transition: background-color 9999s ease-out;
 }
 .ta {
   min-height: 84px;
@@ -1022,8 +1074,9 @@ p.sub {
 .ta:focus,
 .inset-input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 0 3px var(--accent-soft);
 }
 button.input {
   cursor: pointer;
@@ -1217,7 +1270,7 @@ button.input {
 .filterbar::-webkit-scrollbar {
   display: none;
 }
-/* Liquid-glass filter pills. */
+/* Filter pills — solid + clearly visible (Apple segmented feel). */
 .fchip {
   flex: none;
   padding: 9px 17px;
@@ -1225,15 +1278,14 @@ button.input {
   font-size: 14px;
   font-weight: 600;
   color: var(--dim);
-  background: var(--glass-bg);
-  backdrop-filter: blur(14px) saturate(180%);
-  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  background: var(--control-bg);
   box-shadow:
-    inset 0 1px 0 var(--glass-specular),
-    0 4px 12px -8px rgba(0, 0, 0, 0.3);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 2px 8px -4px rgba(0, 0, 0, 0.4);
   transition:
     transform 0.14s cubic-bezier(0.22, 1, 0.36, 1),
     color 0.18s,
+    background 0.18s,
     box-shadow 0.18s;
 }
 .fchip:active {
@@ -1243,9 +1295,7 @@ button.input {
   background: var(--text);
   color: var(--canvas);
   font-weight: 700;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    0 6px 16px -8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.5);
 }
 
 /* ---- Issue card ---- */
@@ -1554,6 +1604,10 @@ button.input {
   width: 17px;
   height: 17px;
   color: var(--accent);
+}
+.takenline.you {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 /* ---- Toast ---- */
@@ -2110,10 +2164,23 @@ button.input {
   width: 17px;
   height: 17px;
 }
-.ta-mic.rec {
+.ta-mic.rec,
+.ta-mic.listening {
   background: var(--u-urgent);
   color: #fff;
   animation: pulse 1.3s ease-in-out infinite;
+}
+.ta-mic.busy {
+  opacity: 0.6;
+}
+.ta.listening {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ta-mic.rec,
+  .ta-mic.listening {
+    animation: none;
+  }
 }
 
 /* AI badge + shimmer */

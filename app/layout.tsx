@@ -48,11 +48,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     store.get(THEME_COOKIE)?.value,
   );
 
+  // Dark is the only real theme now — force it regardless of the stored choice
+  // (the profile toggle is kept but cosmetic). `theme` retained for the cookie.
+  void theme;
   return (
     <html
       lang={lang}
       dir={dirFor(lang)}
-      data-theme={theme}
+      data-theme="dark"
       className={`${geist.variable} ${geistMono.variable}`}
     >
       <head>

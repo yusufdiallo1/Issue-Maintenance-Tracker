@@ -3,13 +3,14 @@
 import { useState, useTransition, useRef } from "react";
 import { Camera, X, Check, Sparkles, ChevronRight } from "lucide-react";
 import { RoomPickerSheet } from "./RoomPickerSheet";
-import { VoiceCapture } from "./VoiceCapture";
+import { InlineVoice } from "./InlineVoice";
 import { CategoryIcon } from "./CategoryIcon";
 import { useLang } from "@/app/providers";
 import { propMeta, TYPES, URG, TAGS } from "@/lib/i18n/dictionary";
 import { urgencyColor } from "@/lib/issues";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "./Toast";
+import { uuid } from "@/lib/outbox";
 import { createReport } from "@/app/actions/issues";
 
 type Urgency = "urgent" | "soon" | "wait";
@@ -60,8 +61,8 @@ export function AddReportScreen({
 
   const fileRef = useRef<HTMLInputElement | null>(null);
   // Voice: the raw transcript caption ("You said: …") + a mic-denied note.
-  const [saidCaption, setSaidCaption] = useState("");
   const [voiceNote, setVoiceNote] = useState<string | null>(null);
+  const [listening, setListening] = useState(false);
 
   const fixedTags: TagOption[] = TAGS.map((g) => ({ id: g.id, label: t(g.k) }));
   const allTags: TagOption[] = [...fixedTags, ...customTags];
@@ -75,18 +76,6 @@ export function AddReportScreen({
     uploadedCount >= MIN_PHOTOS;
   const aiLabel = t("aiFilled");
 
-  // ---------------- voice → polished description (AI only cleans wording) ----
-  function handleVoiceResult(polished: string, transcript: string) {
-    if (type === "other") setOtherText(polished);
-    else setDesc(polished);
-    setAi((a) => ({ ...a, desc: true, other: type === "other" }));
-    setSaidCaption(transcript);
-    setVoiceNote(null);
-  }
-  function handleVoiceError(kind: "denied" | "failed" | "timeout") {
-    setVoiceNote(kind === "denied" ? t("voiceDenied") : t("voiceFailed"));
-  }
-
   // ---------------- photos (instant, multi, up to 10) ----------------
   async function onPickPhotos(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -95,18 +84,25 @@ export function AddReportScreen({
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      show(t("loadError"), "error");
+      return;
+    }
 
     const slots = MAX_PHOTOS - photos.length;
     for (const file of files.slice(0, slots)) {
-      const id = `${Date.now()}-${Math.round(performance.now())}-${file.name}`;
+      const uid = uuid();
       const localUrl = URL.createObjectURL(file);
-      setPhotos((prev) => [...prev, { id, path: null, url: localUrl, uploading: true }]);
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${user.id}/${Date.now()}-${Math.round(Math.abs(Math.sin(file.size)) * 1e6)}.${ext}`;
-      const { error } = await supabase.storage.from("issue-photos").upload(path, file);
+      setPhotos((prev) => [...prev, { id: uid, path: null, url: localUrl, uploading: true }]);
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      // Unique path (UUID) so two same-size shots in the same ms never collide.
+      const path = `${user.id}/${uid}.${ext}`;
+      const { error } = await supabase.storage
+        .from("issue-photos")
+        .upload(path, file, { contentType: file.type || "image/jpeg" });
       if (error) {
-        setPhotos((prev) => prev.filter((p) => p.id !== id));
+        setPhotos((prev) => prev.filter((p) => p.id !== uid));
+        show(t("loadError"), "error");
         continue;
       }
       const { data: signed } = await supabase.storage
@@ -114,7 +110,7 @@ export function AddReportScreen({
         .createSignedUrl(path, 3600);
       setPhotos((prev) =>
         prev.map((p) =>
-          p.id === id ? { ...p, path, url: signed?.signedUrl ?? localUrl, uploading: false } : p,
+          p.id === uid ? { ...p, path, url: signed?.signedUrl ?? localUrl, uploading: false } : p,
         ),
       );
     }
@@ -234,24 +230,38 @@ export function AddReportScreen({
           {t("descLabel")} {ai.desc && <AiBadge label={aiLabel} />}
         </label>
 
-        <VoiceCapture onResult={handleVoiceResult} onError={handleVoiceError} />
-
-        {saidCaption && (
-          <p className="said-caption">
-            {t("youSaid")}: “{saidCaption}”
-          </p>
-        )}
+        {/* Small inline mic: live speech-to-text streams into the box; on stop
+            Groq enhances the wording. */}
+        <div className="ta-wrap">
+          <textarea
+            className={ai.desc ? "ta justfilled" : listening ? "ta listening" : "ta"}
+            placeholder={t("descPh")}
+            value={desc}
+            onChange={(e) => {
+              setDesc(e.target.value);
+              setAi((a) => ({ ...a, desc: false }));
+            }}
+          />
+          <InlineVoice
+            lang={lang}
+            onInterim={(text) => {
+              setListening(true);
+              setDesc(text);
+            }}
+            onFinal={(text) => {
+              setListening(false);
+              if (text) {
+                setDesc(text);
+                setAi((a) => ({ ...a, desc: true }));
+              }
+            }}
+            onError={(kind) => {
+              setListening(false);
+              setVoiceNote(kind === "denied" ? t("voiceDenied") : t("voiceFailed"));
+            }}
+          />
+        </div>
         {voiceNote && <p className="voice-note">{voiceNote}</p>}
-
-        <textarea
-          className={ai.desc ? "ta justfilled" : "ta"}
-          placeholder={t("descPh")}
-          value={desc}
-          onChange={(e) => {
-            setDesc(e.target.value);
-            setAi((a) => ({ ...a, desc: false }));
-          }}
-        />
       </div>
 
       {/* 3) type */}

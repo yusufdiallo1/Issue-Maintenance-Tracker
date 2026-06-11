@@ -246,10 +246,10 @@ export function IssueDetailSheet({
           </div>
         )}
 
-        {takerName && (
-          <div className="takenline">
+        {issue.taken_by && (
+          <div className={mine ? "takenline you" : "takenline"}>
             <User />
-            {t("takenBy")} {takerName}
+            {mine ? t("youTook") : `${t("takenBy")} ${takerName ?? ""}`}
           </div>
         )}
 

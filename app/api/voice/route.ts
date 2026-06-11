@@ -9,6 +9,22 @@ import { createClient } from "@/lib/supabase/server";
 
 const POLISH_PROMPT = `You are a transcription editor for a hotel maintenance app. You receive a raw spoken note (Arabic, English, or a mix). Return a cleaned-up version of the SAME text: fix grammar and spelling, add correct punctuation and capitalization, and make it read as a clear one- or two-sentence problem description. Keep the SAME language the speaker used (do not translate). Do NOT add facts, room numbers, names, or details that were not said. Output ONLY the cleaned text — no quotes, labels, or commentary.`;
 
+async function polish(transcript: string): Promise<string> {
+  try {
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      temperature: 0.2,
+      messages: [
+        { role: "system", content: POLISH_PROMPT },
+        { role: "user", content: transcript },
+      ],
+    });
+    return completion.choices[0]?.message?.content?.trim() || transcript;
+  } catch {
+    return transcript;
+  }
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {
@@ -16,6 +32,16 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
 
+  // JSON path: live Web Speech text → enhance wording only (no transcription).
+  const ctype = request.headers.get("content-type") || "";
+  if (ctype.includes("application/json")) {
+    const { text } = (await request.json().catch(() => ({ text: "" }))) as { text?: string };
+    const raw = (text ?? "").trim();
+    if (!raw) return NextResponse.json({ transcript: "", text: "" });
+    return NextResponse.json({ transcript: raw, text: await polish(raw) });
+  }
+
+  // Multipart path: record → Whisper transcribe → enhance (Safari/iOS fallback).
   const form = await request.formData();
   const blob = form.get("audio");
   if (!(blob instanceof Blob)) {
@@ -50,20 +76,5 @@ export async function POST(request: Request) {
   }
 
   // 2) Polish the wording only (never extract fields).
-  let polished = transcript;
-  try {
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
-      temperature: 0.2,
-      messages: [
-        { role: "system", content: POLISH_PROMPT },
-        { role: "user", content: transcript },
-      ],
-    });
-    polished = completion.choices[0]?.message?.content?.trim() || transcript;
-  } catch {
-    polished = transcript; // non-blocking — fall back to the raw transcript
-  }
-
-  return NextResponse.json({ transcript, text: polished });
+  return NextResponse.json({ transcript, text: await polish(transcript) });
 }
