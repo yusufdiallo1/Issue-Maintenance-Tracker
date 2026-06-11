@@ -415,11 +415,56 @@ select {
   transform: scale(0.98);
 }
 .snav {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
+/* Vertical liquid-glass thumb that slides to the active item (refracts behind). */
+.snav-thumb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  border-radius: 11px;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 24%, transparent),
+    color-mix(in srgb, var(--accent) 8%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.35),
+    0 4px 12px -8px color-mix(in srgb, var(--accent) 45%, transparent);
+  -webkit-backdrop-filter: blur(2px) saturate(180%) brightness(1.06);
+  backdrop-filter: blur(2px) saturate(180%) brightness(1.06) url(#liquidGlass-sm);
+  transition:
+    transform 0.42s cubic-bezier(0.34, 1.4, 0.5, 1),
+    height 0.42s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+@supports not (backdrop-filter: url(#liquidGlass-sm)) {
+  .snav-thumb {
+    backdrop-filter: blur(2px) saturate(180%) brightness(1.06);
+  }
+}
+.low-power .snav-thumb {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .snav-thumb {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition:
+      transform 0.2s ease,
+      height 0.2s ease;
+  }
+}
 .snav-item {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -429,9 +474,7 @@ select {
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  transition:
-    background 0.15s,
-    color 0.15s;
+  transition: color 0.25s;
   text-align: start;
   width: 100%;
 }
@@ -441,10 +484,9 @@ select {
   flex: none;
 }
 .snav-item:hover {
-  background: var(--card2);
+  color: var(--text);
 }
 .snav-item.on {
-  background: var(--accent-soft);
   color: var(--accent);
 }
 .sprofile {
@@ -925,15 +967,39 @@ p.sub {
     color-mix(in srgb, var(--accent) 26%, transparent),
     color-mix(in srgb, var(--accent) 8%, transparent)
   );
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.4),
     inset 0 -6px 12px -8px rgba(0, 0, 0, 0.25),
     0 4px 12px -6px color-mix(in srgb, var(--accent) 50%, transparent);
+  /* Liquid-glass LENS: refracts the page/background behind the nav. */
+  -webkit-backdrop-filter: blur(2px) saturate(180%) brightness(1.08);
+  backdrop-filter: blur(2px) saturate(180%) brightness(1.08) url(#liquidGlass-sm);
   transition:
     transform 0.42s cubic-bezier(0.34, 1.4, 0.5, 1),
     width 0.42s cubic-bezier(0.34, 1.4, 0.5, 1);
   pointer-events: none;
   z-index: 0;
+}
+/* No SVG-filter backdrops (Safari/iOS) → clean frost, still slides. */
+@supports not (backdrop-filter: url(#liquidGlass-sm)) {
+  .nav-thumb {
+    backdrop-filter: blur(2px) saturate(180%) brightness(1.08);
+  }
+}
+/* Low-power / reduced-motion → no refraction, eased (no spring). */
+.low-power .nav-thumb {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-thumb {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition:
+      transform 0.2s ease,
+      width 0.2s ease;
+  }
 }
 .nav .tab {
   position: relative;

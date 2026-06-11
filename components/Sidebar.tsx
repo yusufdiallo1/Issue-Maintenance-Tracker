@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { Logo } from "./Logo";
 import type { NavItem } from "./nav-items";
@@ -25,7 +26,29 @@ export function Sidebar({
   onAdd: () => void;
   onProfile: () => void;
 }) {
-  const { t } = useLang();
+  const { t, dir } = useLang();
+
+  // Vertical liquid-glass thumb that slides to the active nav item.
+  const navRef = useRef<HTMLElement | null>(null);
+  const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [thumb, setThumb] = useState<{ y: number; h: number } | null>(null);
+
+  const measure = () => {
+    const nav = navRef.current;
+    const btn = btnRefs.current[active];
+    if (!nav || !btn) return;
+    setThumb({ y: btn.offsetTop, h: btn.offsetHeight });
+  };
+  useLayoutEffect(measure, [active, dir, items.length]);
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(nav);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
   return (
     <aside className="sidebar">
       <div className="sbrand">
@@ -41,10 +64,20 @@ export function Sidebar({
         <span>{t("newReport")}</span>
       </button>
 
-      <nav className="snav">
+      <nav className="snav" ref={navRef}>
+        {thumb && (
+          <span
+            className="snav-thumb"
+            aria-hidden
+            style={{ transform: `translateY(${thumb.y}px)`, height: thumb.h }}
+          />
+        )}
         {items.map(({ id, labelKey, Icon }) => (
           <button
             key={id}
+            ref={(el) => {
+              btnRefs.current[id] = el;
+            }}
             className={active === id ? "snav-item on" : "snav-item"}
             onClick={() => onNavigate(id)}
             aria-current={active === id ? "page" : undefined}
