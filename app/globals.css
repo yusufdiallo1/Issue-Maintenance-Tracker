@@ -3472,3 +3472,186 @@ button.input {
     backdrop-filter: blur(10px) saturate(180%);
   }
 }
+
+/* ============================================================
+   MOBILE OPTIMIZATION (<860px)
+   Native-feeling phone layout. Logical CSS props so ar/ur (RTL)
+   and en/bn (LTR) both read correctly. Desktop (≥860px) keeps the
+   sidebar layout from the block near the top of this file.
+   ============================================================ */
+@media (max-width: 859.98px) {
+  /* ---- Page gutters: comfortable 16px on phones ---- */
+  .scroll {
+    padding-inline: 16px;
+    padding-top: 4px;
+    /* keep room for the floating bottom nav pill */
+    padding-bottom: 132px;
+    /* belt-and-suspenders: nothing but the filter strips may scroll sideways */
+    overflow-x: hidden;
+  }
+  .screen {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* ---- Typography scaled down for phones ---- */
+  h1.title {
+    font-size: 26px;
+    margin: 6px 2px 2px;
+  }
+  p.sub {
+    font-size: 15px;
+    margin-bottom: 18px;
+  }
+  .section-h {
+    margin-top: 22px;
+  }
+
+  /* ---- REPORTS HEADER: stack with breathing room ---- */
+  .reports-head {
+    /* Title on its own line, the icon-button group on the next row. */
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .reports-head .title {
+    margin-bottom: 0;
+  }
+  /* The inline button group (refresh + view toggle) becomes its own row,
+     aligned to the start so it doesn't crowd the title. */
+  .reports-head > div {
+    justify-content: flex-start;
+  }
+
+  /* Search full-width on its own line; sort sits beside it if it fits,
+     otherwise wraps to its own line (flex-wrap already on .reports-toolbar). */
+  .reports-toolbar {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .searchwrap {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .searchinput {
+    min-height: 44px;
+  }
+  .sortwrap {
+    flex: 1 1 auto;
+  }
+  .sortselect {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  /* ---- FILTER STRIPS: independent horizontal swipe, never wrap ---- */
+  .filterbar {
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    /* small breathing room between the two strips */
+    padding-block: 2px 12px;
+    /* let chips bleed to the edge for a native feel, then pad back */
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+  .filterbar .fchip {
+    scroll-snap-align: start;
+  }
+
+  /* ---- TOUCH TARGETS: everything tappable ≥44px ---- */
+  .fchip {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding-block: 0;
+  }
+  .iconbtn {
+    width: 44px;
+    height: 44px;
+  }
+  .viewtoggle {
+    padding: 4px;
+  }
+  .viewtoggle button {
+    width: 44px;
+    height: 38px;
+  }
+  .nav .tab {
+    min-height: 44px;
+  }
+  .rm {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-block: 0;
+  }
+  .rt {
+    min-height: 44px;
+  }
+  .ddchip,
+  .chip {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .seg button {
+    min-height: 44px;
+  }
+  .opt,
+  .ub {
+    min-height: 64px;
+  }
+
+  /* ---- CARDS: full-width, comfortable thumb height ---- */
+  .issue {
+    width: 100%;
+    padding: 16px;
+    gap: 14px;
+    min-height: 84px;
+  }
+  /* description stays clamped to ~2 lines (already set globally) */
+  .issue .l3 {
+    flex-wrap: wrap;
+  }
+}
+
+/* ============================================================
+   MOBILE BOTTOM SHEETS (<700px)
+   Repurpose the centered .modal as a bottom-anchored sheet that
+   slides up, with rounded top corners only and safe-area padding.
+   Desktop keeps the centered modal (this query never matches there).
+   ============================================================ */
+@media (max-width: 700px) {
+  .scrim.modal-scrim {
+    align-items: flex-end !important;
+    justify-content: stretch !important;
+    padding: 0;
+  }
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* rounded top corners only — anchored to the bottom edge */
+    border-radius: 24px 24px 0 0;
+    padding: 18px 20px;
+    /* respect the home-indicator inset */
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+  /* slide up from the bottom instead of the centered pop-in */
+  .modal.enter {
+    animation: slideup 0.34s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal.enter {
+    animation: none;
+  }
+}
