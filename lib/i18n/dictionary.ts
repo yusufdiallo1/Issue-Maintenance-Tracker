@@ -191,6 +191,12 @@ export const T = {
     ur: "وہ جو زبان بولتے ہیں",
   },
   notifications: { en: "Notifications", ar: "الإشعارات", bn: "নোটিফিকেশন", ur: "اطلاعات" },
+  updateAvailable: {
+    en: "Update available — refreshing…",
+    ar: "يتوفّر تحديث — يتم التحديث…",
+    bn: "আপডেট উপলব্ধ — রিফ্রেশ হচ্ছে…",
+    ur: "اپ ڈیٹ دستیاب — ریفریش ہو رہا ہے…",
+  },
   noNotifications: {
     en: "No notifications yet.",
     ar: "لا توجد إشعارات بعد.",

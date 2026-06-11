@@ -34,6 +34,24 @@ const checks: Check[] = [
     valid: (v) => v.startsWith("gsk_") && v.length > 20,
     hint: "should start with gsk_",
   },
+  {
+    name: "NEXT_PUBLIC_VAPID_PUBLIC_KEY",
+    value: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    valid: (v) => v.length > 80,
+    hint: "Web Push public key — `npx web-push generate-vapid-keys`",
+  },
+  {
+    name: "VAPID_PRIVATE_KEY",
+    value: process.env.VAPID_PRIVATE_KEY,
+    valid: (v) => v.length > 20,
+    hint: "Web Push private key (server-only)",
+  },
+  {
+    name: "VAPID_SUBJECT",
+    value: process.env.VAPID_SUBJECT,
+    valid: (v) => v.startsWith("mailto:") || v.startsWith("https://"),
+    hint: "should start with mailto: or https://",
+  },
 ];
 
 let failed = false;

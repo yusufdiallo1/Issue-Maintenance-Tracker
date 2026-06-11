@@ -107,7 +107,13 @@ export function InlineVoice({
       aria-label={state === "recording" ? t("stop") : t("tapSpeak")}
       title={state === "recording" ? t("stop") : t("tapSpeak")}
     >
-      {state === "busy" ? <Loader2 className="spin" /> : state === "recording" ? <Square /> : <Mic />}
+      {state === "busy" ? (
+        <Loader2 className="spin" />
+      ) : state === "recording" ? (
+        <Square />
+      ) : (
+        <Mic />
+      )}
     </button>
   );
 }

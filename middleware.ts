@@ -66,6 +66,6 @@ export const config = {
   // Run on everything except Next internals, static assets, and the public
   // service worker + offline fallback (which must load without a session).
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icon.svg|aurion-logo.png|sw.js|offline.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|aurion-logo.png|sw.js|offline.html|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

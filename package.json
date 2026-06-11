@@ -11,6 +11,7 @@
     "format:check": "prettier --check .",
     "seed": "node --env-file=.env --import tsx scripts/seed.ts",
     "check:env": "node --env-file=.env --import tsx scripts/check-env.ts",
+    "gen:icons": "node scripts/gen-icons.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

@@ -22,8 +22,31 @@ const notoUrdu = Noto_Naskh_Arabic({ subsets: ["arabic"], variable: "--font-ur",
 export const metadata: Metadata = {
   title: "Aurion Maintenance",
   description: "Issue & maintenance tracker for Aurion Hotels.",
-  icons: { icon: "/icon.svg" },
+  manifest: "/manifest.json",
+  applicationName: "Aurion Maintenance",
+  appleWebApp: {
+    capable: true,
+    title: "Aurion",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-touch-icon.png",
+  },
 };
+
+// iOS launch (splash) images — device px + media queries. iOS needs these for a
+// native full-screen launch when added to the Home Screen.
+const SPLASH = [
+  { w: 1290, h: 2796, dpr: 3 },
+  { w: 1179, h: 2556, dpr: 3 },
+  { w: 1170, h: 2532, dpr: 3 },
+  { w: 1125, h: 2436, dpr: 3 },
+  { w: 1242, h: 2688, dpr: 3 },
+  { w: 828, h: 1792, dpr: 2 },
+  { w: 750, h: 1334, dpr: 2 },
+  { w: 640, h: 1136, dpr: 2 },
+];
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -64,14 +87,23 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     >
       <head>
         <meta name="theme-color" content="#0a0a0a" />
+        {/* iOS Home-Screen launch images for a native full-screen splash. */}
+        {SPLASH.map(({ w, h, dpr }) => (
+          <link
+            key={`${w}x${h}`}
+            rel="apple-touch-startup-image"
+            href={`/splash/${w}x${h}.png`}
+            media={`(device-width: ${w / dpr}px) and (device-height: ${h / dpr}px) and (-webkit-device-pixel-ratio: ${dpr})`}
+          />
+        ))}
         <script dangerouslySetInnerHTML={{ __html: THEME_COLOR_SCRIPT }} />
       </head>
       <body>
         {/* Premium matte film-grain (dark only); pointer-events none. */}
         <div className="grain" aria-hidden />
         <LiquidGlassFilter />
-        <ServiceWorker />
         <Providers initialLang={lang} initialTheme={theme}>
+          <ServiceWorker />
           {children}
         </Providers>
       </body>
