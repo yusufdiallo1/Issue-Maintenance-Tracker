@@ -73,6 +73,59 @@ export async function addEmployee(input: {
   return { ok: true };
 }
 
+/** Change a user's role (admin↔staff). Admin only; cannot change self. */
+export async function changeRole(userId: string, role: "admin" | "staff"): Promise<EmployeeResult> {
+  const me = await getCurrentProfile();
+  if (!me || me.role !== "admin") return { ok: false, error: "forbidden" };
+  if (userId === me.id) return { ok: false, error: "cannot_change_self" };
+  if (role !== "admin" && role !== "staff") return { ok: false, error: "bad_role" };
+
+  const admin = createAdminClient();
+  const { data: target } = await admin
+    .from("profiles")
+    .select("full_name")
+    .eq("id", userId)
+    .single();
+
+  const { error } = await admin.from("profiles").update({ role }).eq("id", userId);
+  if (error) return { ok: false, error: error.message };
+
+  await admin.from("audit_log").insert({
+    actor: me.id,
+    actor_name: me.full_name,
+    action: "role",
+    target_text: `${target?.full_name ?? ""} → ${role}`,
+  });
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/** Set a new password for a user. Admin only. */
+export async function resetPassword(userId: string, password: string): Promise<EmployeeResult> {
+  const me = await getCurrentProfile();
+  if (!me || me.role !== "admin") return { ok: false, error: "forbidden" };
+  if (!password || password.length < 6) return { ok: false, error: "weak_password" };
+
+  const admin = createAdminClient();
+  const { data: target } = await admin
+    .from("profiles")
+    .select("full_name")
+    .eq("id", userId)
+    .single();
+
+  const { error } = await admin.auth.admin.updateUserById(userId, { password });
+  if (error) return { ok: false, error: error.message };
+
+  await admin.from("audit_log").insert({
+    actor: me.id,
+    actor_name: me.full_name,
+    action: "pwreset",
+    target_text: target?.full_name ?? null,
+  });
+  revalidatePath("/");
+  return { ok: true };
+}
+
 /** Delete an auth user + profile. Admin only; cannot remove self. */
 export async function removeEmployee(userId: string): Promise<EmployeeResult> {
   const me = await getCurrentProfile();

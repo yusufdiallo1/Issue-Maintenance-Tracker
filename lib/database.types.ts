@@ -165,7 +165,16 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean };
     };
     Enums: {
-      audit_action: "report" | "take" | "done" | "deadline" | "addemp" | "rmemp" | "login";
+      audit_action:
+        | "report"
+        | "take"
+        | "done"
+        | "deadline"
+        | "addemp"
+        | "rmemp"
+        | "login"
+        | "role"
+        | "pwreset";
       issue_deadline: "today" | "tomorrow" | "days3" | "week";
       issue_status: "open" | "progress" | "done";
       issue_urgency: "urgent" | "soon" | "wait";

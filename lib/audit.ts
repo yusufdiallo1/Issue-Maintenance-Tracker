@@ -10,6 +10,8 @@ const VERB_KEY: Record<string, Key> = {
   addemp: "vAdded",
   rmemp: "vRemoved",
   login: "vLogin",
+  role: "vRole",
+  pwreset: "vPwreset",
 };
 
 export function auditText(

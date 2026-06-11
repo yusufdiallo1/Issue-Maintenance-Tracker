@@ -15,6 +15,7 @@ import { AddReportScreen } from "./AddReportScreen";
 import { MyReportsScreen } from "./MyReportsScreen";
 import { SummaryScreen } from "./SummaryScreen";
 import { SettingsScreen } from "./SettingsScreen";
+import { ManageScreen } from "./manage/ManageScreen";
 import { navItemsFor, type Role } from "./nav-items";
 import { useLang } from "@/app/providers";
 import { useViewEnter } from "@/lib/useViewEnter";
@@ -83,6 +84,18 @@ export function AppShell({
     );
   } else if (active === "summary") {
     screen = <SummaryScreen initialIssues={issues} />;
+  } else if (active === "manage" && isAdmin) {
+    // Staff can't reach Manage via nav; this guard + the empty team/audit data
+    // + server-side admin checks on every write are the real boundary.
+    screen = (
+      <ManageScreen
+        currentUserId={currentUserId}
+        team={team}
+        audit={audit}
+        issues={issues}
+        profiles={profiles}
+      />
+    );
   } else {
     screen = <SettingsScreen role={role} currentUserId={currentUserId} team={team} audit={audit} />;
   }

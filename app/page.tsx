@@ -15,7 +15,7 @@ export default async function Home() {
     fetchIssues(),
     fetchProfiles(),
     isAdmin ? fetchTeam() : Promise.resolve([]),
-    isAdmin ? fetchAudit() : Promise.resolve([]),
+    isAdmin ? fetchAudit(500) : Promise.resolve([]),
     fetchRoomsByProperty(),
   ]);
 
