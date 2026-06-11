@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from "react";
 import { Camera, X, Check, Sparkles, ChevronRight } from "lucide-react";
 import { RoomPickerSheet } from "./RoomPickerSheet";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { InlineVoice } from "./InlineVoice";
 import { CategoryIcon } from "./CategoryIcon";
 import { useLang } from "@/app/providers";
@@ -45,7 +46,7 @@ export function AddReportScreen({
   onViewReports: () => void;
   roomsByProperty?: Record<string, string[]>;
 }) {
-  const { t, lang } = useLang();
+  const { t, tf, lang } = useLang();
   const { show } = useToast();
   const online = useOnline();
   const [supabase] = useState(() => createClient());
@@ -66,12 +67,14 @@ export function AddReportScreen({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetEnter, setSheetEnter] = useState(false);
   const [sent, setSent] = useState<{ ticket: number; prop: string; room: string } | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const fileRef = useRef<HTMLInputElement | null>(null);
   const descRef = useRef<HTMLTextAreaElement | null>(null);
   // Voice: the raw transcript caption ("You said: …") + a mic-denied note.
   const [voiceNote, setVoiceNote] = useState<string | null>(null);
+  const [recording, setRecording] = useState(false);
 
   const fixedTags: TagOption[] = TAGS.map((g) => ({ id: g.id, label: t(g.k) }));
   const allTags: TagOption[] = [...fixedTags, ...customTags];
@@ -157,7 +160,7 @@ export function AddReportScreen({
   }
 
   // ---------------- submit ----------------
-  function submit() {
+  function doSubmit() {
     if (!canSend || !roomProp || !type || !urg) return;
     const baseDesc = (type === "other" ? otherText : desc).trim();
     const labelById = new Map(customTags.map((c) => [c.id, c.label]));
@@ -194,7 +197,7 @@ export function AddReportScreen({
           photoPaths: photos.filter((p) => p.path).map((p) => p.path as string),
         });
         if (res.ok) {
-          show(t("saved"), "success");
+          show(res.count > 1 ? tf("nReportsCreated", res.count) : t("saved"), "success");
           setSent({ ticket: res.id, prop: roomProp, room: room ?? "" });
         } else {
           show(t("loadError"), "error");
@@ -271,7 +274,7 @@ export function AddReportScreen({
         <div className="ta-wrap">
           <textarea
             ref={descRef}
-            className={ai.desc ? "ta justfilled" : "ta"}
+            className={`ta${ai.desc ? "justfilled" : ""}${recording ? "recording" : ""}`}
             placeholder={t("descPh")}
             value={desc}
             onChange={(e) => {
@@ -281,7 +284,18 @@ export function AddReportScreen({
           />
           <InlineVoice
             lang={lang}
+            onStart={() => {
+              setRecording(true);
+              setVoiceNote(null);
+            }}
+            onInterim={(text) => {
+              // Live text while speaking (Chrome/Android). Replaced by the final
+              // Whisper transcript on stop.
+              setDesc(text);
+              setAi((a) => ({ ...a, desc: false }));
+            }}
             onFinal={(text) => {
+              setRecording(false);
               setVoiceNote(null);
               if (text) {
                 setDesc(text);
@@ -296,9 +310,10 @@ export function AddReportScreen({
                 });
               }
             }}
-            onError={(kind) =>
-              setVoiceNote(kind === "denied" ? t("voiceDenied") : t("voiceFailed"))
-            }
+            onError={(kind) => {
+              setRecording(false);
+              setVoiceNote(kind === "denied" ? t("voiceDenied") : t("voiceFailed"));
+            }}
           />
         </div>
         {voiceNote && <p className="voice-note">{voiceNote}</p>}
@@ -444,7 +459,11 @@ export function AddReportScreen({
         </div>
       </div>
 
-      <button className="btn gold" disabled={!canSend || pending} onClick={submit}>
+      <button
+        className="btn gold"
+        disabled={!canSend || pending}
+        onClick={() => setConfirmOpen(true)}
+      >
         <Check />
         {t("send")}
       </button>
@@ -461,6 +480,18 @@ export function AddReportScreen({
           setSheetOpen(false);
         }}
         onClose={() => setSheetOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title={t("sendReportQ")}
+        message={t("sendReportMsg")}
+        confirmLabel={t("send")}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          doSubmit();
+        }}
       />
     </div>
   );

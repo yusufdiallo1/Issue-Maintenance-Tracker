@@ -15,7 +15,7 @@ import type { ProfileLite } from "@/lib/data";
 
 type Filter = "all" | "urgent" | "new" | "progress" | "done";
 type View = "list" | "grid";
-type SortKey = "newest" | "urgent" | "deadline";
+type SortKey = "mine" | "newest" | "urgent" | "deadline";
 
 const FILTERS: { id: Filter; key: "fAll" | "fUrgent" | "fNew" | "fProgress" | "fDone" }[] = [
   { id: "all", key: "fAll" },
@@ -73,7 +73,7 @@ export function ReportsScreen({
   // ---- Filter/sort/search state, seeded from + persisted to the URL ----
   const [filter, setFilter] = useState<Filter>((params.get("status") as Filter) || "all");
   const [propFilter, setPropFilter] = useState<string>(params.get("prop") || "all");
-  const [sort, setSort] = useState<SortKey>((params.get("sort") as SortKey) || "newest");
+  const [sort, setSort] = useState<SortKey>((params.get("sort") as SortKey) || "mine");
   const [search, setSearch] = useState(params.get("q") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(search);
 
@@ -191,9 +191,14 @@ export function ReportsScreen({
     }
     if (propFilter !== "all") list = list.filter((i) => i.property === propFilter);
     list = applyStatusFilter(list, filter);
+    const mineRank = (i: Issue) =>
+      i.reported_by === currentUserId || i.taken_by === currentUserId ? 0 : 1;
     const arr = [...list];
     arr.sort((a, b) => {
-      if (sort === "urgent") {
+      if (sort === "mine") {
+        const d = mineRank(a) - mineRank(b);
+        if (d !== 0) return d;
+      } else if (sort === "urgent") {
         const d = (URGENCY_RANK[a.urgency] ?? 9) - (URGENCY_RANK[b.urgency] ?? 9);
         if (d !== 0) return d;
       } else if (sort === "deadline") {
@@ -204,7 +209,7 @@ export function ReportsScreen({
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
     return arr;
-  }, [issues, debouncedSearch, propFilter, filter, sort, nameById]);
+  }, [issues, debouncedSearch, propFilter, filter, sort, nameById, currentUserId]);
 
   // Reset the page window when the query changes (render-phase, not an effect).
   const queryKey = `${debouncedSearch}|${propFilter}|${filter}|${sort}`;
@@ -328,6 +333,7 @@ export function ReportsScreen({
           ariaLabel={t("sortNewest")}
           onChange={setSort}
           options={[
+            { value: "mine", label: t("sortMine") },
             { value: "newest", label: t("sortNewest") },
             { value: "urgent", label: t("sortUrgent") },
             { value: "deadline", label: t("sortDeadline") },

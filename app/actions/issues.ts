@@ -26,7 +26,9 @@ export type CreateReportInput = {
   photoPaths: string[];
   lang: Lang;
 };
-export type CreateReportResult = { ok: true; id: number } | { ok: false; error: string };
+export type CreateReportResult =
+  | { ok: true; id: number; count: number }
+  | { ok: false; error: string };
 
 /** Create a new issue (reported_by = me, created_at = now) + 'report' audit. */
 export async function createReport(input: CreateReportInput): Promise<CreateReportResult> {
@@ -36,16 +38,14 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
     return { ok: false, error: "missing_fields" };
   }
 
-  // Auto-translate the free text into all 4 languages (cached on the row).
-  // The original stays in `description`; `source_language` records its language.
-  const base = input.description || "";
   const { translateAll, detectLang } = await import("@/lib/translate");
-  const source = base ? detectLang(base) : input.lang;
-  const translations = base ? await translateAll(base, source) : {};
-  // description_ar kept for the legacy card reader; description holds the original.
-  const ar = translations.ar ?? base;
+  const { splitProblems } = await import("@/lib/split");
 
-  // Translate CUSTOM tag labels (custom:<label>) into all 4 languages too.
+  // One spoken/typed note may describe SEVERAL problems → split into one issue
+  // each (same room/property/photos/tags). A single problem returns one entry.
+  const problems = await splitProblems(input.description || "", input.type, input.urgency);
+
+  // Translate CUSTOM tag labels (custom:<label>) into all 4 languages once.
   const tagTranslations: Record<string, Record<string, string>> = {};
   const customLabels = (input.tags ?? [])
     .filter((tg) => tg.startsWith("custom:"))
@@ -62,27 +62,78 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("issues")
-    .insert({
-      property: input.property,
-      room: input.room ?? "",
-      type: input.type,
-      urgency: input.urgency,
-      status: "open",
-      description: base,
-      description_ar: ar,
-      source_language: source,
-      description_translations: translations,
-      tag_translations: tagTranslations,
-      tags: input.tags ?? [],
-      photo_paths: input.photoPaths ?? [],
-      photo_path: input.photoPaths?.[0] ?? null,
-      reported_by: me.id,
-    })
-    .select("id")
-    .single();
-  if (error || !data) return { ok: false, error: error?.message ?? "insert_failed" };
+  const createdIds: number[] = [];
+
+  for (const p of problems) {
+    const base = p.description;
+    const source = base ? detectLang(base) : input.lang;
+    const translations = base ? await translateAll(base, source) : {};
+    const ar = translations.ar ?? base;
+
+    const { data, error } = await supabase
+      .from("issues")
+      .insert({
+        property: input.property,
+        room: input.room ?? "",
+        type: p.type,
+        urgency: p.urgency,
+        status: "open",
+        description: base,
+        description_ar: ar,
+        source_language: source,
+        description_translations: translations,
+        tag_translations: tagTranslations,
+        tags: input.tags ?? [],
+        photo_paths: input.photoPaths ?? [],
+        photo_path: input.photoPaths?.[0] ?? null,
+        reported_by: me.id,
+      })
+      .select("id")
+      .single();
+    if (error || !data) {
+      if (createdIds.length) break; // keep the ones that already succeeded
+      return { ok: false, error: error?.message ?? "insert_failed" };
+    }
+    createdIds.push(data.id);
+
+    // Notify EVERY other user of each new issue (push + bell). Fire-and-forget.
+    const isSafety = (input.tags ?? []).includes("safety");
+    const isUrgent = p.urgency === "urgent" || isSafety;
+    const issueId = data.id;
+    void (async () => {
+      try {
+        const { sendPushToAllExcept } = await import("@/lib/push");
+        const admin = createAdminClient();
+        const where = `${propLabelEn(input.property)}${input.room ? " " + input.room : ""}`;
+        const title = `${isSafety ? "⚠️ " : isUrgent ? "🔴 " : ""}New issue · ${where}`;
+        const body = `${p.type} · ${p.urgency} — ${base}`.trim().slice(0, 140);
+        const { data: recipients } = await admin.from("profiles").select("id").neq("id", me.id);
+        const ids = (recipients ?? []).map((r) => r.id);
+        if (ids.length) {
+          await admin.from("notifications").insert(
+            ids.map((uid) => ({
+              user_id: uid,
+              kind: isSafety ? "safety" : isUrgent ? "urgent" : "new",
+              issue_id: issueId,
+              title,
+              body,
+            })),
+          );
+        }
+        await sendPushToAllExcept(me.id, {
+          title,
+          body,
+          url: `/?issue=${issueId}`,
+          tag: `issue-${issueId}`,
+          urgent: isUrgent,
+        });
+      } catch {
+        /* ignore */
+      }
+    })();
+  }
+
+  if (!createdIds.length) return { ok: false, error: "insert_failed" };
 
   await writeAudit(me.id, me.full_name, {
     action: "report",
@@ -90,48 +141,8 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
     room: input.room ?? "",
   });
 
-  // Notify EVERY other user of the new issue — lock-screen push + bell inbox row.
-  // Fire-and-forget so push delivery never blocks the request.
-  const isSafety = (input.tags ?? []).includes("safety");
-  const isUrgent = input.urgency === "urgent" || isSafety;
-  void (async () => {
-    try {
-      const { sendPushToAllExcept } = await import("@/lib/push");
-      const admin = createAdminClient();
-      const where = `${propLabelEn(input.property)}${input.room ? " " + input.room : ""}`;
-      const title = `${isSafety ? "⚠️ " : isUrgent ? "🔴 " : ""}New issue · ${where}`;
-      const body = `${input.type} · ${input.urgency} — ${input.description || ""}`
-        .trim()
-        .slice(0, 140);
-
-      // Bell inbox rows for everyone except the reporter (matches push reach).
-      const { data: recipients } = await admin.from("profiles").select("id").neq("id", me.id);
-      const ids = (recipients ?? []).map((p) => p.id);
-      if (ids.length) {
-        await admin.from("notifications").insert(
-          ids.map((uid) => ({
-            user_id: uid,
-            kind: isSafety ? "safety" : isUrgent ? "urgent" : "new",
-            issue_id: data.id,
-            title,
-            body,
-          })),
-        );
-      }
-      await sendPushToAllExcept(me.id, {
-        title,
-        body,
-        url: `/?issue=${data.id}`,
-        tag: `issue-${data.id}`,
-        urgent: isUrgent,
-      });
-    } catch {
-      /* ignore */
-    }
-  })();
-
   revalidatePath("/");
-  return { ok: true, id: data.id };
+  return { ok: true, id: createdIds[0], count: createdIds.length };
 }
 
 function propLabelEn(code: string): string {

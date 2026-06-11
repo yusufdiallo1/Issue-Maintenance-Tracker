@@ -2661,6 +2661,31 @@ button.input {
 .ta.listening {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
 }
+/* Recording: a clear RED outline on the whole input so it's obvious it's live. */
+.ta.recording {
+  box-shadow:
+    0 0 0 2px var(--u-urgent),
+    0 0 0 6px color-mix(in srgb, var(--u-urgent) 18%, transparent);
+  animation: ta-rec-pulse 1.4s ease-in-out infinite;
+}
+@keyframes ta-rec-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px var(--u-urgent),
+      0 0 0 6px color-mix(in srgb, var(--u-urgent) 18%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px var(--u-urgent),
+      0 0 0 9px color-mix(in srgb, var(--u-urgent) 8%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ta.recording {
+    animation: none;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .ta-mic.rec,
   .ta-mic.listening {

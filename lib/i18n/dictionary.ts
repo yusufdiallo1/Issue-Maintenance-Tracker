@@ -301,6 +301,24 @@ export const T = {
     bn: "ছবি যোগ হয়েছে",
     ur: "تصویر شامل ہو گئی",
   },
+  sendReportQ: {
+    en: "Send this report?",
+    ar: "إرسال هذا البلاغ؟",
+    bn: "এই রিপোর্ট পাঠাবেন?",
+    ur: "یہ رپورٹ بھیجیں؟",
+  },
+  sendReportMsg: {
+    en: "Please double-check the room and details before sending.",
+    ar: "يرجى التحقق من الغرفة والتفاصيل قبل الإرسال.",
+    bn: "পাঠানোর আগে রুম ও বিবরণ যাচাই করুন।",
+    ur: "بھیجنے سے پہلے کمرہ اور تفصیلات دوبارہ دیکھ لیں۔",
+  },
+  nReportsCreated: {
+    en: (n: number) => `${n} reports created`,
+    ar: (n: number) => `تم إنشاء ${n} بلاغات`,
+    bn: (n: number) => `${n}টি রিপোর্ট তৈরি হয়েছে`,
+    ur: (n: number) => `${n} رپورٹس بن گئیں`,
+  },
   descLabel: {
     en: "What's the problem?",
     ar: "ما المشكلة؟",
@@ -384,6 +402,12 @@ export const T = {
     ar: "ابحث عن غرفة أو وصف أو شخص…",
     bn: "রুম, বর্ণনা বা ব্যক্তি অনুসন্ধান করুন…",
     ur: "کمرہ، تفصیل یا فرد تلاش کریں…",
+  },
+  sortMine: {
+    en: "My reports first",
+    ar: "بلاغاتي أولاً",
+    bn: "আমার রিপোর্ট আগে",
+    ur: "میری رپورٹس پہلے",
   },
   sortNewest: { en: "Newest", ar: "الأحدث", bn: "নতুন", ur: "تازہ ترین" },
   sortUrgent: { en: "Most urgent", ar: "الأكثر إلحاحًا", bn: "সবচেয়ে জরুরি", ur: "سب سے فوری" },
