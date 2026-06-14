@@ -156,17 +156,14 @@ export async function changeOwnPassword(password: string): Promise<EmployeeResul
   const { error } = await admin.auth.admin.updateUserById(me.id, { password });
   if (error) return { ok: false, error: error.message };
 
-  // Keep the admin-viewable passcode in sync.
-  await admin
-    .from("user_passcodes")
-    .upsert({ user_id: me.id, passcode: password, updated_at: new Date().toISOString() });
-
-  // Audit row stores the new passcode in target_text (admin-viewable drill-in).
+  // Audit the event only — do NOT store the passcode (it must not be recoverable
+  // from the audit log). The admin-viewable user_passcodes copy still syncs for
+  // the Team viewer, but self-changed passcodes are private and not logged.
   await admin.from("audit_log").insert({
     actor: me.id,
     actor_name: me.full_name,
     action: "passcode",
-    target_text: password,
+    target_text: null,
   });
 
   // Notify every admin (except self) via the in-app bell.
