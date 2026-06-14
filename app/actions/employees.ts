@@ -18,6 +18,8 @@ export async function addEmployee(input: {
   password: string;
   role: "admin" | "staff";
   language?: "ar" | "en" | "bn" | "ur";
+  properties?: string[];
+  title?: string | null;
 }): Promise<EmployeeResult> {
   const me = await getCurrentProfile();
   if (!me || me.role !== "admin") return { ok: false, error: "forbidden" };
@@ -26,6 +28,8 @@ export async function addEmployee(input: {
   const username = input.username.trim().toLowerCase();
   const password = input.password;
   const language = input.language ?? "ar";
+  const properties = (input.properties ?? []).filter(Boolean);
+  const title = input.title?.trim() || null;
   if (!fullName || !username || !password) {
     return { ok: false, error: "missing_fields" };
   }
@@ -55,6 +59,8 @@ export async function addEmployee(input: {
     full_name: fullName,
     role: input.role,
     preferred_language: language,
+    properties,
+    title,
   });
   if (profErr) {
     // Roll back the orphaned auth user so the username stays free.

@@ -190,6 +190,19 @@ export const T = {
     bn: "তারা যে ভাষায় কথা বলে",
     ur: "وہ جو زبان بولتے ہیں",
   },
+  assignedProps: {
+    en: "Assigned properties",
+    ar: "العقارات المخصّصة",
+    bn: "নির্ধারিত প্রপার্টি",
+    ur: "تفویض کردہ پراپرٹیز",
+  },
+  jobTitle: {
+    en: "Job title (optional)",
+    ar: "المسمّى الوظيفي (اختياري)",
+    bn: "পদবি (ঐচ্ছিক)",
+    ur: "عہدہ (اختیاری)",
+  },
+  jobTitlePh: { en: "e.g. Manager", ar: "مثال: مدير", bn: "যেমন ম্যানেজার", ur: "مثلاً مینیجر" },
   notifications: { en: "Notifications", ar: "الإشعارات", bn: "নোটিফিকেশন", ur: "اطلاعات" },
   updateAvailable: {
     en: "Update available — refreshing…",
