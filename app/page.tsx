@@ -23,6 +23,8 @@ export default async function Home() {
     <AppShell
       userName={profile.full_name}
       username={profile.username}
+      title={profile.title}
+      defaultProperty={profile.properties?.[0] ?? null}
       role={profile.role}
       currentUserId={profile.id}
       issues={issues}

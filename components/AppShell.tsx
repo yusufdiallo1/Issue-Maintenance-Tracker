@@ -33,6 +33,8 @@ import type { ProfileLite, ProfileFull, AuditRow } from "@/lib/data";
 export function AppShell({
   userName,
   username,
+  title = null,
+  defaultProperty = null,
   role,
   currentUserId,
   issues,
@@ -45,6 +47,8 @@ export function AppShell({
 }: {
   userName: string;
   username: string;
+  title?: string | null;
+  defaultProperty?: string | null;
   role: Role;
   currentUserId: string;
   issues: Issue[];
@@ -153,6 +157,7 @@ export function AppShell({
     screen = (
       <AddReportScreen
         roomsByProperty={roomsByProperty}
+        defaultProperty={defaultProperty}
         onViewReports={() => navigate(isAdmin ? "reports" : "mine")}
       />
     );
@@ -181,6 +186,7 @@ export function AppShell({
       <SettingsScreen
         userName={userName}
         username={username}
+        title={title}
         role={role}
         notifEnabled={notifEnabled}
         notifSound={notifSound}

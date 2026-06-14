@@ -170,6 +170,8 @@ export type Database = {
           preferred_language: string;
           notif_enabled: boolean;
           notif_sound: boolean;
+          properties: string[];
+          title: string | null;
         };
         Insert: {
           created_at?: string;
@@ -180,6 +182,8 @@ export type Database = {
           preferred_language?: string;
           notif_enabled?: boolean;
           notif_sound?: boolean;
+          properties?: string[];
+          title?: string | null;
         };
         Update: {
           created_at?: string;
@@ -190,6 +194,8 @@ export type Database = {
           preferred_language?: string;
           notif_enabled?: boolean;
           notif_sound?: boolean;
+          properties?: string[];
+          title?: string | null;
         };
         Relationships: [];
       };

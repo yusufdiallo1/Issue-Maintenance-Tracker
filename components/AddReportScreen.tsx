@@ -42,9 +42,11 @@ function AiBadge({ label }: { label: string }) {
 export function AddReportScreen({
   onViewReports,
   roomsByProperty,
+  defaultProperty = null,
 }: {
   onViewReports: () => void;
   roomsByProperty?: Record<string, string[]>;
+  defaultProperty?: string | null;
 }) {
   const { t, tf, lang } = useLang();
   const { show } = useToast();
@@ -52,7 +54,8 @@ export function AddReportScreen({
   const [supabase] = useState(() => createClient());
 
   const [desc, setDesc] = useState("");
-  const [roomProp, setRoomProp] = useState<string | null>(null);
+  // Pre-select the reporter's assigned property (they can still switch).
+  const [roomProp, setRoomProp] = useState<string | null>(defaultProperty);
   const [room, setRoom] = useState<string | null>(null);
   const [type, setType] = useState<string | null>(null);
   const [otherText, setOtherText] = useState("");

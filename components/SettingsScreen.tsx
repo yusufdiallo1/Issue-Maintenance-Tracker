@@ -19,12 +19,14 @@ import type { Theme } from "@/lib/prefs";
 export function SettingsScreen({
   userName,
   username,
+  title = null,
   role,
   notifEnabled = true,
   notifSound = true,
 }: {
   userName: string;
   username: string;
+  title?: string | null;
   role: "admin" | "staff";
   notifEnabled?: boolean;
   notifSound?: boolean;
@@ -94,7 +96,7 @@ export function SettingsScreen({
           <div className="ei">
             <div className="en">{userName}</div>
             <div className="eu">
-              @{username} · {role === "admin" ? t("admin") : t("staff")}
+              @{username} · {title || (role === "admin" ? t("admin") : t("staff"))}
             </div>
           </div>
         </div>
