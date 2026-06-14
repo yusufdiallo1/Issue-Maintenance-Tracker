@@ -2781,26 +2781,29 @@ button.input {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px 6px;
+  gap: 9px;
+  padding: 18px 8px;
   border-radius: 16px;
-  background: var(--card);
-  border: 1px solid var(--border);
+  /* Clearly visible card surface on the dark canvas (was invisible). */
+  background: var(--card2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 14px -8px rgba(0, 0, 0, 0.6);
   transition:
-    transform 0.14s,
-    border 0.18s,
+    transform 0.1s ease,
+    box-shadow 0.18s,
     background 0.18s;
   color: var(--text);
 }
 .opt svg {
-  width: 25px;
-  height: 25px;
+  width: 26px;
+  height: 26px;
   color: var(--text);
-  opacity: 0.75;
+  opacity: 0.9;
 }
 .opt .t {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 12.5px;
+  font-weight: 600;
   text-align: center;
   line-height: 1.2;
 }
@@ -2808,16 +2811,17 @@ button.input {
   transform: scale(0.95);
 }
 .opt.sel {
-  border-color: var(--accent);
-  border-width: 2px;
   background: var(--accent-soft);
+  box-shadow:
+    inset 0 0 0 2px var(--accent),
+    0 6px 18px -8px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .opt.sel svg {
   color: var(--accent);
   opacity: 1;
 }
 .opt.sel .t {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent);
 }
 
@@ -2828,22 +2832,28 @@ button.input {
   gap: 10px;
 }
 .ub {
-  padding: 16px 6px;
+  padding: 18px 8px;
   border-radius: 16px;
   font-weight: 600;
   font-size: 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  transition: transform 0.14s;
+  gap: 9px;
+  /* Visible card surface on the dark canvas (was invisible). */
+  background: var(--card2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 14px -8px rgba(0, 0, 0, 0.6);
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.18s,
+    background 0.18s;
   color: var(--text);
 }
 .ub .dot {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
 }
 .ub:active {
@@ -2859,10 +2869,11 @@ button.input {
   --c: var(--u-wait);
 }
 .ub.sel {
-  border-color: var(--c);
-  border-width: 2px;
   color: var(--c);
-  background: color-mix(in srgb, var(--c) 9%, transparent);
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  box-shadow:
+    inset 0 0 0 2px var(--c),
+    0 6px 18px -8px color-mix(in srgb, var(--c) 45%, transparent);
 }
 
 /* tags */
