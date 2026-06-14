@@ -5,12 +5,12 @@
 // inline password reset, and remove — all optimistic with rollback
 // and a toast. Never acts on self.
 // ============================================================
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Plus, Trash2, Search, Check, X, KeyRound } from "lucide-react";
 import { AddEmployeeSheet } from "../AddEmployeeSheet";
 import { useToast } from "../Toast";
 import { useLang } from "@/app/providers";
-import { changeRole, removeEmployee, resetPassword } from "@/app/actions/employees";
+import { changeRole, removeEmployee, resetPassword, getPasscodes } from "@/app/actions/employees";
 import type { ProfileFull } from "@/lib/data";
 
 function initial(name: string) {
@@ -36,6 +36,17 @@ export function TeamPanel({ currentUserId, team }: { currentUserId: string; team
   const [sheetEnter, setSheetEnter] = useState(false);
   const [resetFor, setResetFor] = useState<string | null>(null);
   const [pwValue, setPwValue] = useState("");
+  // Admin-only passcode map (loaded on mount); powers the in-app viewer.
+  const [passcodes, setPasscodes] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let active = true;
+    getPasscodes().then((res) => {
+      if (active && res.ok && res.map) setPasscodes(res.map);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -81,6 +92,7 @@ export function TeamPanel({ currentUserId, team }: { currentUserId: string; team
       const res = await resetPassword(id, pw);
       if (res.ok) {
         show(t("pwReset"), "success");
+        setPasscodes((m) => ({ ...m, [id]: pw }));
         setResetFor(null);
         setPwValue("");
       } else {
@@ -177,47 +189,47 @@ export function TeamPanel({ currentUserId, team }: { currentUserId: string; team
               </div>
 
               {resetFor === m.id && !isSelf && (
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "center",
-                    padding: "0 16px 13px",
-                  }}
-                >
-                  <input
-                    className="inset-input"
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder={t("newPassword")}
-                    value={pwValue}
-                    onChange={(e) => setPwValue(e.target.value)}
-                    aria-label={t("newPassword")}
-                    style={{ flex: 1 }}
-                  />
-                  <button
-                    className="rmbtn"
-                    style={{
-                      background: "var(--accent-soft)",
-                      color: "var(--accent)",
-                    }}
-                    disabled={pwValue.trim().length < 6}
-                    onClick={() => submitReset(m.id)}
-                    aria-label={t("save")}
-                  >
-                    <Check />
-                  </button>
-                  <button
-                    className="rmbtn"
-                    style={{ background: "var(--card2)", color: "var(--dim)" }}
-                    onClick={() => {
-                      setResetFor(null);
-                      setPwValue("");
-                    }}
-                    aria-label={t("cancel")}
-                  >
-                    <X />
-                  </button>
+                <div style={{ padding: "0 16px 13px" }}>
+                  {passcodes[m.id] && (
+                    <div className="passcode-view">
+                      {t("currentPasscode")}: <b className="mono">{passcodes[m.id]}</b>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input
+                      className="inset-input"
+                      type="text"
+                      autoComplete="new-password"
+                      placeholder={t("newPassword")}
+                      value={pwValue}
+                      onChange={(e) => setPwValue(e.target.value)}
+                      aria-label={t("newPassword")}
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      className="rmbtn"
+                      style={{
+                        background: "var(--accent-soft)",
+                        color: "var(--accent)",
+                      }}
+                      disabled={pwValue.trim().length < 6}
+                      onClick={() => submitReset(m.id)}
+                      aria-label={t("save")}
+                    >
+                      <Check />
+                    </button>
+                    <button
+                      className="rmbtn"
+                      style={{ background: "var(--card2)", color: "var(--dim)" }}
+                      onClick={() => {
+                        setResetFor(null);
+                        setPwValue("");
+                      }}
+                      aria-label={t("cancel")}
+                    >
+                      <X />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

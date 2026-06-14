@@ -1233,11 +1233,9 @@ html.in-browser .nav {
 .btn:active {
   transform: scale(0.96);
 }
-/* Tactile press on every tappable row/control — instant feedback. */
-.setrow:active,
-.snav-item:active,
-.aud-btn:active,
-.emp:active,
+/* Tactile press on compact CONTROLS only (chips, icon buttons, picker cards).
+   Full-width list rows do NOT scale — that read as an unwanted "bounce" on
+   every click, especially rows that contain their own buttons (e.g. Team). */
 .rt:active,
 .ddchip:active,
 .chip:active,
@@ -1249,9 +1247,14 @@ html.in-browser .nav {
 .snav-item,
 .aud-btn {
   transition:
-    transform 0.08s ease,
     background 0.12s,
     color 0.12s;
+}
+/* Rows highlight on press instead of scaling (iOS list behavior). */
+.setrow:active,
+.snav-item:active,
+.aud-btn:active {
+  background: var(--card2);
 }
 .btn.gold {
   color: var(--fill-text);
@@ -2075,6 +2078,20 @@ button.input {
   border-radius: 2px;
   background: var(--accent);
   transform: rotate(45deg);
+}
+
+/* Admin passcode viewer (Team list) */
+.passcode-view {
+  font-size: 13px;
+  color: var(--dim);
+  background: var(--accent-soft);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+}
+.passcode-view b {
+  color: var(--accent);
+  font-size: 15px;
 }
 
 /* ---- Audit drill-in ---- */

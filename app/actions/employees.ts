@@ -68,6 +68,11 @@ export async function addEmployee(input: {
     return { ok: false, error: profErr.message };
   }
 
+  // Store the passcode so admins/managers can view it in-app (internal tool).
+  await admin
+    .from("user_passcodes")
+    .upsert({ user_id: created.user.id, passcode: password, updated_at: new Date().toISOString() });
+
   await admin.from("audit_log").insert({
     actor: me.id,
     actor_name: me.full_name,
@@ -122,6 +127,11 @@ export async function resetPassword(userId: string, password: string): Promise<E
   const { error } = await admin.auth.admin.updateUserById(userId, { password });
   if (error) return { ok: false, error: error.message };
 
+  // Keep the admin-viewable passcode in sync.
+  await admin
+    .from("user_passcodes")
+    .upsert({ user_id: userId, passcode: password, updated_at: new Date().toISOString() });
+
   await admin.from("audit_log").insert({
     actor: me.id,
     actor_name: me.full_name,
@@ -146,6 +156,11 @@ export async function changeOwnPassword(password: string): Promise<EmployeeResul
   const { error } = await admin.auth.admin.updateUserById(me.id, { password });
   if (error) return { ok: false, error: error.message };
 
+  // Keep the admin-viewable passcode in sync.
+  await admin
+    .from("user_passcodes")
+    .upsert({ user_id: me.id, passcode: password, updated_at: new Date().toISOString() });
+
   // Audit row stores the new passcode in target_text (admin-viewable drill-in).
   await admin.from("audit_log").insert({
     actor: me.id,
@@ -169,6 +184,20 @@ export async function changeOwnPassword(password: string): Promise<EmployeeResul
   }
   revalidatePath("/");
   return { ok: true };
+}
+
+/**
+ * Admin/manager only: return every stored passcode, keyed by user id. Powers the
+ * in-app passcode viewer (the key icon in the Team list). Internal-tool feature.
+ */
+export async function getPasscodes(): Promise<{ ok: boolean; map?: Record<string, string> }> {
+  const me = await getCurrentProfile();
+  if (!me || me.role !== "admin") return { ok: false };
+  const admin = createAdminClient();
+  const { data } = await admin.from("user_passcodes").select("user_id, passcode");
+  const map: Record<string, string> = {};
+  (data ?? []).forEach((r) => (map[r.user_id] = r.passcode));
+  return { ok: true, map };
 }
 
 /** Delete an auth user + profile. Admin only; cannot remove self. */

@@ -742,6 +742,12 @@ export const T = {
   },
   save: { en: "Save", ar: "حفظ", bn: "সংরক্ষণ", ur: "محفوظ کریں" },
   cancel: { en: "Cancel", ar: "إلغاء", bn: "বাতিল", ur: "منسوخ" },
+  currentPasscode: {
+    en: "Current passcode",
+    ar: "رمز الدخول الحالي",
+    bn: "বর্তমান পাসকোড",
+    ur: "موجودہ پاس کوڈ",
+  },
   remove: { en: "Remove", ar: "إزالة", bn: "অপসারণ", ur: "ہٹائیں" },
   confirmRemove: {
     en: "Remove this employee?",

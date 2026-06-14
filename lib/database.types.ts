@@ -205,6 +205,12 @@ export type Database = {
         Update: { id?: never; property?: string; room?: string; created_at?: string };
         Relationships: [];
       };
+      user_passcodes: {
+        Row: { user_id: string; passcode: string; updated_at: string };
+        Insert: { user_id: string; passcode: string; updated_at?: string };
+        Update: { user_id?: string; passcode?: string; updated_at?: string };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: number;

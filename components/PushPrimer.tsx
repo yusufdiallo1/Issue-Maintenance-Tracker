@@ -31,6 +31,10 @@ export function PushPrimer() {
       const standalone =
         window.matchMedia?.("(display-mode: standalone)").matches ||
         (window.navigator as { standalone?: boolean }).standalone === true;
+      // Auto-show AT MOST ONCE ever — mark dismissed the moment it's shown so a
+      // logout/login (or any later visit) never re-pops it. Enabling stays
+      // available afterwards in Settings + the bell modal.
+      localStorage.setItem(DISMISS_KEY, "1");
       // iOS Web Push only works once installed to the Home Screen.
       if (isIOS && !standalone) {
         setIosNeedsInstall(true);
