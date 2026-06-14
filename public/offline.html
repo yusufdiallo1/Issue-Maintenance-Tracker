@@ -49,7 +49,27 @@
       </p>
     </div>
     <script>
-      window.addEventListener("online", () => location.reload());
+      // Recover automatically: reload on the online event AND actively poll the
+      // server every 3s (the online event alone is unreliable). As soon as the
+      // app responds, reload — so a transient blip never strands the user here.
+      let done = false;
+      function recover() {
+        if (done) return;
+        done = true;
+        location.replace("/");
+      }
+      window.addEventListener("online", recover);
+      async function probe() {
+        if (done) return;
+        try {
+          const res = await fetch("/manifest.json", { cache: "no-store" });
+          if (res.ok) return recover();
+        } catch (e) {
+          /* still offline */
+        }
+        setTimeout(probe, 3000);
+      }
+      setTimeout(probe, 1500);
     </script>
   </body>
 </html>

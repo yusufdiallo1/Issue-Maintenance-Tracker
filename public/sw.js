@@ -1,6 +1,6 @@
 /* Aurion Maintenance service worker — installable PWA app-shell caching +
    offline fallback + Web Push. Never caches auth or API responses. */
-const CACHE = "aurion-shell-v2";
+const CACHE = "aurion-shell-v3";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [
   "/offline.html",
@@ -81,9 +81,25 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET" || url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/auth/")) return;
 
-  // Navigations: network-first, fall back to the offline page when truly offline.
+  // Navigations: network-first. Only fall back to the offline page when the
+  // browser is ACTUALLY offline — a transient/slow request that errors while
+  // online must NOT show the offline screen (that was the false "offline" bug).
   if (req.mode === "navigate") {
-    event.respondWith(fetch(req).catch(() => caches.match(OFFLINE_URL)));
+    event.respondWith(
+      fetch(req).catch(async () => {
+        if (self.navigator && self.navigator.onLine === false) {
+          return (await caches.match(OFFLINE_URL)) || Response.error();
+        }
+        // Online but this request failed (dev restart, blip): retry once, then
+        // surface the real error so the browser/app handles it — never the
+        // sticky offline page.
+        try {
+          return await fetch(req);
+        } catch {
+          return (await caches.match(OFFLINE_URL)) || Response.error();
+        }
+      }),
+    );
     return;
   }
 

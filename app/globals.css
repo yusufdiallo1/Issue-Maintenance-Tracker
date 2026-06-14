@@ -199,6 +199,28 @@ p.sub {
   -webkit-user-select: text;
   user-select: text;
 }
+/* macOS-style thin overlay scrollbars (native feel; default chunky bars off). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text) 22%, transparent) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 20%, transparent);
+  border-radius: 980px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--text) 34%, transparent);
+  background-clip: padding-box;
+}
 body {
   font-family:
     var(--font-sans),
@@ -969,11 +991,11 @@ html[data-theme="dark"] {
 
 /* ---- Typography helpers ---- */
 h1.title {
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
   margin: 10px 2px 4px;
-  line-height: 1.05;
+  line-height: 1.04;
 }
 [dir="rtl"] h1.title {
   letter-spacing: 0;
