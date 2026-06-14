@@ -1295,19 +1295,30 @@ html.in-browser .nav {
 .inset-input {
   width: 100%;
   padding: 14px 16px;
-  border-radius: 13px;
+  border-radius: 14px;
   background: var(--control-bg);
   color: var(--text);
   border: none;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   font-size: 16px;
-  transition: box-shadow 0.18s;
+  transition:
+    box-shadow 0.18s,
+    background 0.18s;
   letter-spacing: -0.01em;
 }
 .input::placeholder,
 .ta::placeholder,
 .inset-input::placeholder {
   color: var(--faint);
+}
+/* iOS-style focus: subtle accent ring. */
+.input:focus,
+.ta:focus,
+.inset-input:focus {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 0 0 3px var(--accent-soft);
 }
 /* Kill the browser autofill white/yellow wash that made fields look inverted. */
 .input:-webkit-autofill,
@@ -1588,24 +1599,20 @@ button.input {
 
 /* ---- Issue card ---- */
 .issue {
-  border-radius: 18px;
-  padding: 14px;
+  border-radius: 20px;
+  padding: 15px;
   display: flex;
   gap: 13px;
   align-items: stretch;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   transition:
-    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.18s ease,
+    transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.18s ease;
   text-align: start;
   width: 100%;
 }
-.issue:hover {
-  border-color: color-mix(in srgb, var(--text) 18%, var(--border));
-}
 .issue:active {
-  transform: scale(0.985);
+  transform: scale(0.98);
 }
 .thumb {
   width: 54px;
@@ -1813,16 +1820,16 @@ button.input {
   grid-template-columns: 1fr;
 }
 .abtn {
-  padding: 15px;
-  border-radius: 13px;
-  font-weight: 600;
+  padding: 16px;
+  border-radius: 16px;
+  font-weight: 650;
   font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   letter-spacing: -0.01em;
-  transition: transform 0.14s;
+  transition: transform 0.08s ease;
 }
 .abtn:active {
   transform: scale(0.97);
@@ -1982,10 +1989,10 @@ button.input {
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 14px 16px;
+  padding: 15px 16px;
   text-align: start;
   color: var(--text);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
 }
 .setrow + .setrow {
@@ -3790,7 +3797,7 @@ button.input {
 
 /* ---- Settings: team list + audit ---- */
 .slist {
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
 }
 .prow {
@@ -3991,7 +3998,7 @@ button.input {
 }
 .searchwrap svg {
   position: absolute;
-  inset-inline-start: 12px;
+  inset-inline-start: 15px;
   top: 50%;
   transform: translateY(-50%);
   width: 16px;
@@ -4001,12 +4008,13 @@ button.input {
 }
 .searchinput {
   width: 100%;
-  padding: 10px 14px;
-  padding-inline-start: 36px;
-  border-radius: 12px;
+  padding: 11px 16px;
+  padding-inline-start: 38px;
+  /* iOS-style pill search field */
+  border-radius: 980px;
   background: var(--card);
   border: 1px solid var(--border);
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: -0.01em;
   transition:
     border 0.18s,
@@ -4338,9 +4346,9 @@ button.input {
     max-height: 92dvh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    /* rounded top corners only — anchored to the bottom edge */
-    border-radius: 24px 24px 0 0;
-    padding: 18px 20px;
+    /* rounded top corners only — anchored to the bottom edge (iOS sheet) */
+    border-radius: 28px 28px 0 0;
+    padding: 20px 20px;
     /* respect the home-indicator inset */
     padding-bottom: max(20px, env(safe-area-inset-bottom));
   }
@@ -4348,11 +4356,11 @@ button.input {
   .modal::before {
     content: "";
     display: block;
-    width: 40px;
-    height: 4px;
+    width: 38px;
+    height: 5px;
     border-radius: 980px;
-    background: var(--hair);
-    margin: 0 auto 12px;
+    background: color-mix(in srgb, var(--text) 22%, transparent);
+    margin: 2px auto 14px;
   }
   /* slide up from the bottom instead of the centered pop-in */
   .modal.enter {
