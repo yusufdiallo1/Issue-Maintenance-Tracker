@@ -27,7 +27,6 @@ const ACTIONS: { id: string; key: Key }[] = [
   { id: "login", key: "acLogin" },
   { id: "role", key: "acRole" },
   { id: "pwreset", key: "acPwreset" },
-  { id: "passcode", key: "acPasscode" },
 ];
 
 export function AuditPanel({ audit, team }: { audit: AuditRow[]; team: ProfileFull[] }) {
@@ -191,9 +190,6 @@ export function AuditPanel({ audit, team }: { audit: AuditRow[]; team: ProfileFu
               <Row label={t("proofLabel")} value={auditText(detail, lang, t).target} />
             )}
             <Row label="" value={fmtDateTime(detail.created_at, lang)} />
-            {detail.action === "passcode" && detail.target_text && (
-              <Row label={t("newPasswordLabel")} value={detail.target_text} mono />
-            )}
           </div>
         )}
       </Sheet>
