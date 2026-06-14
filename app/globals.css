@@ -992,7 +992,11 @@ p.sub {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(env(safe-area-inset-bottom) + 4px);
+  /* Display-mode aware (set by useDisplayMode):
+     - in a browser tab the pill floats up to clear the browser chrome,
+     - installed/standalone it sits flush at the very bottom.
+     Default to the safe browser offset until the mode is detected. */
+  bottom: calc(env(safe-area-inset-bottom) + 18px);
   margin: 0 auto;
   width: max-content;
   max-width: calc(100% - 30px);
@@ -1014,6 +1018,14 @@ p.sub {
   .nav {
     backdrop-filter: blur(20px) saturate(180%);
   }
+}
+/* Installed / full-screen PWA: no browser chrome → nav flush at the bottom. */
+html.standalone .nav {
+  bottom: calc(env(safe-area-inset-bottom) + 4px);
+}
+/* Browser tab: keep the floating offset so it clears the browser's bottom bar. */
+html.in-browser .nav {
+  bottom: calc(env(safe-area-inset-bottom) + 18px);
 }
 /* The sliding liquid-glass thumb behind the active tab. */
 .nav-thumb {
