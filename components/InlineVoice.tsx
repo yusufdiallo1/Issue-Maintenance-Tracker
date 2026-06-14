@@ -4,37 +4,27 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, Square, Loader2 } from "lucide-react";
 import { useLang } from "@/app/providers";
 
-// Minimal Web Speech typings (not in lib.dom for all targets).
-type SpeechRecognitionEventLike = { results: ArrayLike<ArrayLike<{ transcript: string }>> };
-type SpeechRecognitionLike = {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onresult: (e: SpeechRecognitionEventLike) => void;
-  onerror: () => void;
-  start: () => void;
-  stop: () => void;
-};
-
 /**
  * Small inline mic for the description box. Records with MediaRecorder and
- * transcribes + enhances via Groq Whisper on /api/voice (works in every
- * browser, incl. Safari/iOS — far more reliable than the Web Speech API).
- * Tap to record (mic pulses), tap again to stop → ~2-3s → text fills the box.
+ * transcribes via Groq Whisper on /api/voice — the ONLY transcription engine.
+ * (The browser Web Speech API was removed: it hallucinated wrong text, e.g.
+ * turned Arabic "المكيف لا يعمل" into English nonsense. Whisper is accurate
+ * across Arabic/English/mixed, so it is the single source of truth — we never
+ * show interim/guessed text that could be wrong.)
+ * Tap to record (mic pulses + red outline), tap again to stop → Whisper fills
+ * the box with the final, correct transcript.
  *
- * onInterim(text): shows a "listening…" placeholder while recording.
- * onFinal(text): the enhanced transcript to commit.
+ * onStart(): recording began (parent shows the red outline).
+ * onFinal(text): the Whisper transcript to commit (only ever correct text).
  */
 export function InlineVoice({
   lang,
   onStart,
-  onInterim,
   onFinal,
   onError,
 }: {
   lang?: string;
   onStart?: () => void;
-  onInterim?: (text: string) => void;
   onFinal: (text: string) => void;
   onError: (kind: "denied" | "failed") => void;
 }) {
@@ -44,9 +34,6 @@ export function InlineVoice({
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const startedAtRef = useRef(0);
-  // Optional live interim transcription (Web Speech API — Chrome/Android only).
-  // Whisper (on stop) remains the authoritative final transcript.
-  const recogRef = useRef<{ stop: () => void } | null>(null);
 
   useEffect(() => {
     return () => {
@@ -73,34 +60,6 @@ export function InlineVoice({
     return "";
   }
 
-  // Live interim transcription via Web Speech (Chrome/Android). Best-effort —
-  // emits interim text to onInterim while speaking. Silent no-op elsewhere.
-  function startLiveCaption() {
-    try {
-      const w = window as unknown as {
-        SpeechRecognition?: new () => SpeechRecognitionLike;
-        webkitSpeechRecognition?: new () => SpeechRecognitionLike;
-      };
-      const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
-      if (!Ctor || !onInterim) return;
-      const rec = new Ctor();
-      rec.lang =
-        lang === "en" ? "en-US" : lang === "ur" ? "ur-PK" : lang === "bn" ? "bn-BD" : "ar-SA";
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.onresult = (e: SpeechRecognitionEventLike) => {
-        let text = "";
-        for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
-        if (text.trim()) onInterim(text.trim());
-      };
-      rec.onerror = () => {};
-      rec.start();
-      recogRef.current = { stop: () => rec.stop() };
-    } catch {
-      /* ignore — Whisper still produces the final text */
-    }
-  }
-
   async function start() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -116,19 +75,12 @@ export function InlineVoice({
       mr.start(250); // timeslice so audio always flushes even on a quick stop
       setState("recording");
       onStart?.();
-      startLiveCaption();
     } catch {
       onError("denied");
     }
   }
 
   function stop() {
-    try {
-      recogRef.current?.stop();
-    } catch {
-      /* ignore */
-    }
-    recogRef.current = null;
     streamRef.current?.getTracks().forEach((tr) => tr.stop());
     if (mediaRef.current && mediaRef.current.state !== "inactive") mediaRef.current.stop();
   }
@@ -141,6 +93,7 @@ export function InlineVoice({
       try {
         const fd = new FormData();
         fd.append("audio", blob, `recording.${ext}`);
+        if (lang) fd.append("lang", lang); // hint Whisper toward the UI language
         const res = await fetch("/api/voice", { method: "POST", body: fd, signal: ctrl.signal });
         clearTimeout(timer);
         if (!res.ok) throw new Error(`voice ${res.status}`);

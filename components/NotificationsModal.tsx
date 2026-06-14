@@ -6,7 +6,6 @@ import { useScrollLock } from "@/lib/useScrollLock";
 import { ModalPortal } from "./ModalPortal";
 import { useLang } from "@/app/providers";
 import { usePush } from "@/lib/usePush";
-import { useToast } from "./Toast";
 import { createClient } from "@/lib/supabase/client";
 import { ago } from "@/lib/issues";
 
@@ -32,11 +31,17 @@ export function NotificationsModal({
 }) {
   const { t, lang } = useLang();
   useScrollLock(open);
-  const { subscribed, busy, subscribe, unsubscribe, state } = usePush();
-  const { show } = useToast();
+  // Notifications are ALWAYS ON — silently subscribe (no enable/disable button).
+  const { subscribed, state, subscribe } = usePush();
   const [supabase] = useState(() => createClient());
   const [items, setItems] = useState<Notif[]>([]);
   const [loaded, setLoaded] = useState(false);
+
+  // Auto-subscribe to push the moment it's possible (permission already granted),
+  // so the user never has to flip a switch.
+  useEffect(() => {
+    if (state === "granted" && !subscribed) void subscribe();
+  }, [state, subscribed, subscribe]);
 
   useEffect(() => {
     if (!open) return;
@@ -63,20 +68,6 @@ export function NotificationsModal({
 
   if (!open) return null;
 
-  const onToggle = async () => {
-    if (state === "unsupported") {
-      show(t("pushUnsupported"), "info");
-      return;
-    }
-    if (subscribed) {
-      await unsubscribe();
-      show(t("pushOff"), "info");
-    } else {
-      await subscribe();
-      show(t("pushOn"), "success");
-    }
-  };
-
   return (
     <ModalPortal>
       <div className="scrim modal-scrim enter" onClick={onClose} style={{ zIndex: 92 }}>
@@ -88,14 +79,6 @@ export function NotificationsModal({
         >
           <div className="notif-head">
             <h2 style={{ margin: 0 }}>{t("notifications")}</h2>
-            <button
-              className={subscribed ? "btn gold" : "btn ghost"}
-              style={{ width: "auto", padding: "8px 14px", fontSize: 13 }}
-              onClick={onToggle}
-              disabled={busy}
-            >
-              {subscribed ? t("pushOff") : t("pushOn")}
-            </button>
           </div>
 
           {!loaded ? (

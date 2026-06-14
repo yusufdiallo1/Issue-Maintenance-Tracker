@@ -60,7 +60,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ transcript: "", text: "" });
   }
 
-  // 1) Transcribe (auto-detect ar/en/mixed).
+  // Optional language hint from the UI language → improves accuracy. Whisper
+  // takes ISO-639-1; we hint for ar/bn/ur (English/auto stays open so mixed
+  // ar+en still works). Whisper is the ONLY transcription engine.
+  const langHint = String(form.get("lang") ?? "");
+  const whisperLang = ({ ar: "ar", bn: "bn", ur: "ur" } as Record<string, string>)[langHint];
+
+  // 1) Transcribe (Groq Whisper). Auto-detect unless a non-English hint is given.
   let transcript = "";
   try {
     const ext = (blob.type.split("/")[1] || "webm").split(";")[0];
@@ -71,6 +77,7 @@ export async function POST(request: Request) {
       response_format: "json",
       temperature: 0,
       prompt: "Hotel maintenance problem report.",
+      ...(whisperLang ? { language: whisperLang } : {}),
     });
     transcript = (result.text ?? "").trim();
   } catch (err) {

@@ -138,7 +138,6 @@ export function CompleteSheet({
         <InlineVoice
           lang={lang}
           onStart={() => setRecording(true)}
-          onInterim={(text) => setNote(text)}
           onFinal={(text) => {
             setRecording(false);
             if (text) setNote(text);

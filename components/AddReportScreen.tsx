@@ -293,12 +293,6 @@ export function AddReportScreen({
               setRecording(true);
               setVoiceNote(null);
             }}
-            onInterim={(text) => {
-              // Live text while speaking (Chrome/Android). Replaced by the final
-              // Whisper transcript on stop.
-              setDesc(text);
-              setAi((a) => ({ ...a, desc: false }));
-            }}
             onFinal={(text) => {
               setRecording(false);
               setVoiceNote(null);
