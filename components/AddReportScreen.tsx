@@ -57,7 +57,8 @@ export function AddReportScreen({
   // Pre-select the reporter's assigned property (they can still switch).
   const [roomProp, setRoomProp] = useState<string | null>(defaultProperty);
   const [room, setRoom] = useState<string | null>(null);
-  const [type, setType] = useState<string | null>(null);
+  // Multiple problem types can be picked for one room → one issue per type.
+  const [types, setTypes] = useState<string[]>([]);
   const [otherText, setOtherText] = useState("");
   const [urg, setUrg] = useState<Urgency | null>(null);
   const [tags, setTags] = useState<string[]>([]);
@@ -87,10 +88,12 @@ export function AddReportScreen({
   const uploadedCount = readyPhotos.length;
   const canSend =
     !!roomProp &&
-    !!type &&
+    types.length > 0 &&
     !!urg &&
-    (type !== "other" || otherText.trim().length > 0) &&
+    (!types.includes("other") || otherText.trim().length > 0) &&
     uploadedCount >= MIN_PHOTOS;
+  const toggleType = (id: string) =>
+    setTypes((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   const aiLabel = t("aiFilled");
 
   // ---------------- photos (instant, multi, up to 10) ----------------
@@ -164,11 +167,12 @@ export function AddReportScreen({
 
   // ---------------- submit ----------------
   function doSubmit() {
-    if (!canSend || !roomProp || !type || !urg) return;
-    const baseDesc = (type === "other" ? otherText : desc).trim();
+    if (!canSend || !roomProp || !types.length || !urg) return;
+    const baseDesc = (types.includes("other") ? otherText || desc : desc).trim();
     const labelById = new Map(customTags.map((c) => [c.id, c.label]));
     const tagValues = tags.map((id) => (labelById.has(id) ? `custom:${labelById.get(id)}` : id));
-    const payload = {
+    // One report per selected type (same room/description/photos/urgency/tags).
+    const basePayloads = types.map((type) => ({
       property: roomProp,
       room: room ?? "",
       type,
@@ -177,16 +181,17 @@ export function AddReportScreen({
       descriptionAr: "",
       tags: tagValues,
       lang,
-    };
+    }));
 
-    // OFFLINE: compress the held files into the outbox; the create op uploads
-    // them + creates the issue on reconnect. Show the success screen now.
+    // OFFLINE: queue one create op per type; each uploads + creates on reconnect.
     if (!online) {
       startTransition(async () => {
         const blobs = await Promise.all(
           photos.filter((p) => p.file).map((p) => compressImage(p.file as File)),
         );
-        await enqueue({ id: uuid(), kind: "create", payload, photos: blobs });
+        for (const payload of basePayloads) {
+          await enqueue({ id: uuid(), kind: "create", payload, photos: blobs });
+        }
         show(t("queuedOffline"), "info");
         setSent({ ticket: 0, prop: roomProp, room: room ?? "" });
       });
@@ -195,13 +200,16 @@ export function AddReportScreen({
 
     startTransition(async () => {
       try {
-        const res = await createReport({
-          ...payload,
-          photoPaths: photos.filter((p) => p.path).map((p) => p.path as string),
-        });
-        if (res.ok) {
-          show(res.count > 1 ? tf("nReportsCreated", res.count) : t("saved"), "success");
-          setSent({ ticket: res.id, prop: roomProp, room: room ?? "" });
+        const photoPaths = photos.filter((p) => p.path).map((p) => p.path as string);
+        const results = await Promise.all(
+          basePayloads.map((payload) => createReport({ ...payload, photoPaths })),
+        );
+        const ok = results.filter((r) => r.ok);
+        if (ok.length) {
+          const total = ok.reduce((n, r) => n + (r.ok ? r.count : 0), 0);
+          const firstId = ok[0].ok ? ok[0].id : 0;
+          show(total > 1 ? tf("nReportsCreated", total) : t("saved"), "success");
+          setSent({ ticket: firstId, prop: roomProp, room: room ?? "" });
         } else {
           show(t("loadError"), "error");
         }
@@ -318,22 +326,28 @@ export function AddReportScreen({
         {voiceNote && <p className="voice-note">{voiceNote}</p>}
       </div>
 
-      {/* 3) type */}
+      {/* 3) type — multiple can be selected (one issue per type) */}
       <div className="field">
-        <label>{t("typeLabel")}</label>
+        <label>
+          {t("typeLabel")}
+          <span style={{ color: "var(--faint)", fontWeight: 500, marginInlineStart: 8 }}>
+            · {t("typeHint")}
+          </span>
+        </label>
         <div className="optgrid">
           {TYPES.map((ty) => (
             <button
               key={ty.id}
-              className={type === ty.id ? "opt sel" : "opt"}
-              onClick={() => setType(ty.id)}
+              className={types.includes(ty.id) ? "opt sel" : "opt"}
+              aria-pressed={types.includes(ty.id)}
+              onClick={() => toggleType(ty.id)}
             >
               <CategoryIcon type={ty.id} />
               <span className="t">{t(ty.k)}</span>
             </button>
           ))}
         </div>
-        {type === "other" && (
+        {types.includes("other") && (
           <div style={{ marginTop: 12 }}>
             <label
               style={{

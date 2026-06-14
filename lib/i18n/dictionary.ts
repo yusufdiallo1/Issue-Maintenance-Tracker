@@ -393,6 +393,12 @@ export const T = {
   roomWord: { en: "Room", ar: "الغرفة", bn: "রুম", ur: "کمرہ" },
   chooseWord: { en: "Choose", ar: "اختيار", bn: "নির্বাচন", ur: "منتخب کریں" },
   typeLabel: { en: "Type of problem", ar: "نوع المشكلة", bn: "সমস্যার ধরন", ur: "مسئلے کی قسم" },
+  typeHint: {
+    en: "Pick one or more",
+    ar: "اختر واحدة أو أكثر",
+    bn: "এক বা একাধিক বেছে নিন",
+    ur: "ایک یا زیادہ منتخب کریں",
+  },
   otherLabel: {
     en: "Describe the problem",
     ar: "صف المشكلة",
