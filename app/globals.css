@@ -395,6 +395,7 @@ select {
   align-items: center;
   gap: 11px;
   padding: 4px 8px 20px;
+  flex: none;
 }
 .sbrand .brandmark {
   width: 34px;
@@ -413,6 +414,7 @@ select {
   font-weight: 600;
 }
 .sbnew {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 9px;
@@ -439,6 +441,12 @@ select {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  /* Take the middle space + scroll if the nav is tall, so the profile + bell
+     footer ALWAYS stays pinned + visible at the bottom (any window height). */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 /* Vertical liquid-glass thumb that slides to the active item (refracts behind). */
 .snav-thumb {
@@ -513,6 +521,10 @@ select {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: none;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hair);
 }
 .sfoot .sprofile {
   flex: 1;
@@ -1906,10 +1918,40 @@ button.input {
 .set-seg {
   width: 100%;
 }
+/* Language picker as a LIQUID-GLASS PILL TAB: one frosted pill track, the
+   active language a solid rounded pill (matches the prototype). */
 .set-seg.seg-lang {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 980px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-edge);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 var(--glass-specular),
+    var(--shadow);
+}
+.set-seg.seg-lang button {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  padding: 10px 18px;
+  border-radius: 980px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.set-seg.seg-lang button.on {
+  /* Solid contrast pill — dark in dark mode, dark-on-light in light mode. */
+  color: var(--canvas);
+  background: var(--text);
+  box-shadow: 0 4px 12px -6px rgba(0, 0, 0, 0.5);
 }
 
 /* ---- Settings toggle rows ---- */

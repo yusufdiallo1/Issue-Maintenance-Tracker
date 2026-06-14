@@ -92,8 +92,6 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div style={{ flex: 1 }} />
-
       <div className="sfoot">
         <button className="sprofile" onClick={onProfile}>
           <span className="avatar">{userInitial}</span>
